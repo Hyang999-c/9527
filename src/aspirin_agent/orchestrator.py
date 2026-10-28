@@ -9,6 +9,7 @@ from pathlib import Path
 from .schemas import ExtractionBatch, PipelineResult
 from .tools.article_fetch import enrich_articles
 from .tools.citation_verify import verify_citations
+from .tools.csv_export import export_csvs
 from .tools.deduplication import deduplicate_records
 from .tools.evidence_extract import extract_batch
 from .tools.pubmed_search import PubMedSearcher
@@ -141,4 +142,13 @@ class Orchestrator:
             (self.paths["reports"] / f"report_{timestamp}.md").write_text(
                 result.report.markdown, encoding="utf-8"
             )
+
+        csv_paths = export_csvs(
+            result.articles,
+            result.evidence,
+            result.verifications,
+            self.paths["exports"],
+            timestamp,
+        )
+        logger.info("CSV 已导出：%s", "、".join(path.name for path in csv_paths.values()))
         logger.info("产物已写入 %s", self.root)

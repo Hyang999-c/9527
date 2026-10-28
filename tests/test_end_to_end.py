@@ -105,6 +105,11 @@ def test_pipeline_runs_offline(tmp_path) -> None:
 
     assert list((tmp_path / "reports").glob("report_*.md"))
 
+    csv_files = sorted((tmp_path / "data" / "exports").glob("*.csv"))
+    assert len(csv_files) == 3
+    evidence_csv = next(path for path in csv_files if path.name.startswith("evidence_"))
+    assert evidence_csv.read_text(encoding="utf-8-sig").splitlines()[0].startswith("evidence_id")
+
 
 def test_pipeline_without_llm_still_reports(tmp_path) -> None:
     orchestrator = Orchestrator(

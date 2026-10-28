@@ -1,6 +1,6 @@
 # 项目进度与交接（PROGRESS）
 
-> 最后更新：2026-10-28 12:56（Asia/Shanghai）
+> 最后更新：2026-10-28 13:00（Asia/Shanghai）
 > 用途：第二天无缝接上；先读这一页，再读 README。
 
 ## 一、现在到哪了
@@ -11,28 +11,29 @@
 | 第二步：检索 / 解析 / 去重 | ✅ 完成 | 限速、超时、重试、分批、原始响应落盘；真实 NCBI 已验证 |
 | 第三步：模型抽取 / 结构化校验 | ✅ 完成 | 真实 deepseek-chat 已跑通；科学规则降级、校验提示、陈述类型（事实/作者解释/推断）均已生效 |
 | 第四步：引用核查 / 状态管理 | 🟡 部分 | 本地核查可用；在线标识符校验与语义 judge 还没接进调度 |
-| 第五步：调度 / 报告 / 导出 | 🟡 部分 | Markdown 报告可用；CSV 导出未做；失败清单未进报告 |
+| 第五步：调度 / 报告 / 导出 | 🟡 部分 | Markdown + CSV（UTF-8-SIG）+ JSON 已齐；抽取失败清单未进报告 |
 
-测试基线：**69 passed, 1 skipped，覆盖率 85%**（2026-10-28 12:53 实测）。
+测试基线：**73 passed, 1 skipped，覆盖率 86%**（2026-10-28 12:58 实测）。
 
 ## 二、最近一次真实运行（有证据）
 
-时间：2026-10-28 12:53
-输入：阿司匹林如何抑制血小板聚集？检索式 aspirin platelet inhibition，2 篇文献（PMID 35768902、25126950）
+时间：2026-10-28 12:54
+输入：阿司匹林如何抑制血小板聚集？检索式 aspirin platelet inhibition，1 篇（PMID 35768902）
 
 ~~~text
-articles_found=2  evidence_items=10  extraction_failures=0
-verified_passed=10  verification_issues=0
+articles_found=1  evidence_items=4  extraction_failures=0
+verified_passed=4  verification_issues=0
 ~~~
 
 产出：
 
-- 报告：reports/report_20261028T045307Z.md
-- 处理后数据：data/processed/evidence_20261028T045307Z.json
-- 原始响应：data/raw/pubmed_*_20261028T0452*.json/xml、pmc_efetch_20261028T0453*.xml
-- 文献快照：data/raw/articles_20261028T045307Z.json
+- 报告：reports/report_20261028T045448Z.md
+- 处理后数据：data/processed/evidence_20261028T045448Z.json
+- CSV：data/exports/articles_20261028T045448Z.csv、evidence_*.csv、verifications_*.csv（UTF-8-SIG，已验证 BOM）
+- 原始响应：data/raw/pubmed_*_20261028T0454*.json/xml
+- 文献快照：data/raw/articles_20261028T045448Z.json
 
-注意区分：*_153156Z 那批是**没有模型**时的演示（0 条证据）；*_160016Z 是首轮真实模型（7 条），仅作历史对照。
+注意区分：*_153156Z 无模型演示；*_160016Z 首轮真实模型（7 条）；*_045307Z 第二轮（10 条，补陈述类型）；*_045448Z 为 CSV 验证批。
 
 ## 三、文件地图
 
@@ -55,7 +56,7 @@ src/aspirin_agent/
   utils/rate_limit.py          限速器
   errors.py                    PubMedError / LLMError / EvidenceExtractionError
 prompts/extract_evidence.md    抽取提示词（输出 {"evidence": [...]}）
-tests/                         9 个文件，69 passed
+tests/                         10 个文件，73 passed
 ~~~
 
 ## 四、环境与凭据
@@ -89,14 +90,13 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（明天优先处理）
 
-1. **CSV 导出缺失**：验收要求 Markdown + CSV + JSON；现在只有后两者。
-2. **在线核查没接线**：PubMedResolver 已实现，但 orchestrator 没传 resolver；需要配置开关 verification.online_check（默认关，测试不打网络）。
-3. **语义 judge 没接线**：verify_citations(..., judge=...) 支持，但调度没传；当前 claim_supported 只代表“引句可逐字定位”。
-4. **min_confidence 未使用**：低置信度证据不筛。
-5. 单页检索：没有翻页，retmax 上限 1 万。
-6. 抽取失败只进 JSON，不进报告。
-7. PMC 全文许可/署名未处理；对外转载前需逐篇核对。
-8. utils/retry.py（tenacity）与 searcher 手写重试并存，可择一统一。
+1. **在线核查没接线**：PubMedResolver 已实现，但 orchestrator 没传 resolver；需要配置开关 verification.online_check（默认关，测试不打网络）。
+2. **语义 judge 没接线**：verify_citations(..., judge=...) 支持，但调度没传；当前 claim_supported 只代表“引句可逐字定位”。
+3. **min_confidence 未使用**：低置信度证据不筛。
+4. 单页检索：没有翻页，retmax 上限 1 万。
+5. 抽取失败只进 JSON，不进报告。
+6. PMC 全文许可/署名未处理；对外转载前需逐篇核对。
+7. utils/retry.py（tenacity）与 searcher 手写重试并存，可择一统一。
 
 ## 七、明天从这里开始
 
@@ -104,8 +104,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 0. ✅ 配置 git 身份并首次提交（已完成，9c422db）
 1. ✅ 补 statement_type（已完成；真实跑出作者解释条目，报告可见）
-2. **CSV 导出**（data/exports/articles.csv、evidence.csv、verifications.csv）
-   - 验收：字段含 evidence_id / pmid / status / issues，UTF-8-SIG 可直接用 Excel 打开
+2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. **在线核查开关 + judge 接线**
    - 验收：默认离线全绿；开启后至少 1 篇真实文献通过/不通过判定合理
 
@@ -113,6 +112,6 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ~~~text
 ruff check src tests   -> All checks passed!
-pytest                 -> 69 passed, 1 skipped
-coverage               -> 85%
+pytest                 -> 73 passed, 1 skipped
+coverage               -> 86%
 ~~~
