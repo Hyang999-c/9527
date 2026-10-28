@@ -135,8 +135,9 @@ def main(argv: list[str] | None = None) -> int:
         max_articles = int(settings.get("fetch", {}).get("max_articles", 40))
         articles = enrich_articles(articles, searcher=searcher, limit=max_articles)
 
+    prompt_path = args.prompt or settings.get("extraction", {}).get("prompt")
     prompt_template = (
-        Path(args.prompt).read_text(encoding="utf-8") if args.prompt else None
+        Path(prompt_path).read_text(encoding="utf-8") if prompt_path else None
     )
     extraction = settings.get("extraction", {})
     temperature = (
@@ -212,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
         "evidence": len(item_rows),
         "extraction_failures": [failure.model_dump() for failure in batch.failures],
         "fulltext": not args.no_fulltext,
-        "prompt": args.prompt or "prompts/extract_evidence.md",
+        "prompt": prompt_path or "prompts/extract_evidence.md",
         "temperature": temperature,
         "max_tokens": max_tokens,
     }

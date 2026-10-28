@@ -18,3 +18,24 @@ articles:
   - pmid: "40991180"
     stratum: review
     note: 2024 年阿司匹林与巨噬细胞/炎症综述（仅摘要）
+  - pmid: "30158069"
+    stratum: human_rct
+    note: ARRIVE 一级预防 RCT（Lancet 2018）
+  - pmid: "40888723"
+    stratum: human_rct
+    note: PCI 术后早期停用阿司匹林 RCT（NEJM 2025）
+  - pmid: "40902613"
+    stratum: meta_analysis
+    note: 氯吡格雷 vs 阿司匹林二级预防 meta 分析（Lancet 2025）
+  - pmid: "19482214"
+    stratum: meta_analysis
+    note: 抗血小板治疗一级/二级预防经典 meta 分析（Lancet 2009）
+  - pmid: "27846246"
+    stratum: meta_analysis
+    note: 致命性消化道出血 meta 分析（PLoS One 2016）
+  - pmid: "28905988"
+    stratum: human_primary
+    note: 低剂量肠溶阿司匹林生物等效性研究（Clin Pharmacol Ther 2018）
+  - pmid: "35060092"
+    stratum: review
+    note: 磷脂阿司匹林制剂 PK/PD 综述（Clin Pharmacokinet 2022）
