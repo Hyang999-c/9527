@@ -39,6 +39,10 @@ extraction:
 verification:
   require_identifier: true
   require_quote: true
+  # 默认关闭：开启后才联网核对 PMID/DOI
+  online_check: false
+  # 默认关闭：开启后额外调用模型判断引句是否支持主张（会消耗额度）
+  semantic_judge: false
 
 llm:
   provider: openai-compatible

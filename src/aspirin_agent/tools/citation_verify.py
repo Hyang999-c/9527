@@ -1,13 +1,17 @@
-"""引用核查：标识符、标题、来源可访问性、引句可定位性。
+"""引用核查：标识符、标题、来源可访问性、引句可定位性，以及可选的语义判定。
 
-claim_supported 表示引句能在原文中逐字定位；语义层面的“是否真的支持结论”
-由可选 judge 提供，未提供时不额外拔高结论。
+默认全部离线：
+- resolver 不传，就不做 NCBI/Crossref 在线校验
+- judge 不传，claim_supported 只表示“引句能在原文中逐字定位”
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from collections.abc import Callable
+from pathlib import Path
 
 import httpx
 
@@ -18,9 +22,17 @@ from ..schemas import (
     Verification,
     VerificationStatus,
 )
+from ..utils.logging_utils import get_logger
 
-Resolver = Callable[[str | None, str | None], bool]
-Judge = Callable[[Evidence, Article], bool]
+logger = get_logger(__name__)
+
+PROMPTS_DIR = Path(__file__).resolve().parents[3] / "prompts"
+ESUMMARY_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+CROSSREF_URL = "https://api.crossref.org/works/"
+USER_AGENT = "aspirin-research-agent/0.1 (research use)"
+
+Resolver = Callable[[str | None, str | None], bool | None]
+Judge = Callable[[Evidence, Article], bool | None]
 
 
 def normalize(text: str) -> str:
@@ -35,28 +47,106 @@ def quote_supported(quote: str | None, source: str) -> bool | None:
 
 
 class PubMedResolver:
-    """在线校验：有 PMID 查 esummary，只有 DOI 查 Crossref。"""
+    """在线校验：有 PMID 查 esummary，只有 DOI 查 Crossref。
 
-    def __init__(self, client: httpx.Client | None = None) -> None:
-        self._client = client or httpx.Client(timeout=20)
+    返回 True/False/None：
+    - True：标识符存在
+    - False：明确不存在
+    - None：网络或服务异常，不能据此判定文献无效
+    """
 
-    def __call__(self, pmid: str | None, doi: str | None) -> bool:
+    def __init__(
+        self,
+        client: httpx.Client | None = None,
+        limiter=None,
+        timeout: float = 20.0,
+    ) -> None:
+        self._client = client or httpx.Client(
+            timeout=timeout, headers={"User-Agent": USER_AGENT}
+        )
+        self.limiter = limiter
+        self.email = os.getenv("NCBI_EMAIL")
+
+    def __call__(self, pmid: str | None, doi: str | None) -> bool | None:
         try:
             if pmid:
-                response = self._client.get(
-                    "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
-                    params={"db": "pubmed", "id": pmid, "retmode": "json"},
-                )
+                if self.limiter is not None:
+                    self.limiter.wait()
+                params = {
+                    "db": "pubmed",
+                    "id": pmid,
+                    "retmode": "json",
+                    "tool": "aspirin-research-agent",
+                }
+                if self.email:
+                    params["email"] = self.email
+                response = self._client.get(ESUMMARY_URL, params=params)
+                if response.status_code == 404:
+                    return False
                 response.raise_for_status()
-                return bool(response.json().get("result", {}).get(pmid))
+                result = response.json().get("result", {})
+                return bool(result.get(pmid))
             if doi:
-                response = self._client.get(
-                    f"https://api.crossref.org/works/{doi}", timeout=15
-                )
-                return response.status_code == 200
-        except httpx.HTTPError:
-            return False
+                if self.limiter is not None:
+                    self.limiter.wait()
+                response = self._client.get(CROSSREF_URL + doi, timeout=15)
+                if response.status_code == 404:
+                    return False
+                response.raise_for_status()
+                return True
+        except httpx.HTTPError as exc:
+            logger.warning("在线校验失败（%s / %s）: %s", pmid, doi, exc)
+            return None
         return False
+
+
+def _parse_json_object(raw: str) -> dict:
+    start, end = raw.find("{"), raw.rfind("}")
+    if start == -1 or end <= start:
+        return {}
+    try:
+        data = json.loads(raw[start : end + 1])
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+class LLMJudge:
+    """让模型判断引句是否真的支持主张；只输出 supported 布尔值。"""
+
+    def __init__(
+        self,
+        llm,
+        prompt_name: str = "verify_evidence.md",
+        max_tokens: int = 300,
+        source_chars: int = 6000,
+    ) -> None:
+        prompt_path = PROMPTS_DIR / prompt_name
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"提示词不存在: {prompt_path}")
+        self.llm = llm
+        self.template = prompt_path.read_text(encoding="utf-8")
+        self.max_tokens = max_tokens
+        self.source_chars = source_chars
+
+    def __call__(self, item: Evidence, article: Article) -> bool | None:
+        source = f"{article.abstract}\n{article.fulltext or ''}".strip()[: self.source_chars]
+        prompt = (
+            self.template.replace("{{CLAIM}}", item.claim)
+            .replace("{{QUOTE}}", item.source_location.quote or "")
+            .replace("{{SOURCE}}", source)
+        )
+        raw = self.llm.complete(
+            [
+                {"role": "system", "content": "你是严格的引文核查员，只输出 JSON。"},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.0,
+            max_tokens=self.max_tokens,
+            json_mode=True,
+        )
+        supported = _parse_json_object(raw).get("supported")
+        return supported if isinstance(supported, bool) else None
 
 
 def _final_status(
@@ -140,19 +230,27 @@ def verify_citations(
                 issues.append("来源位置未标注")
 
             if quote_state is True and judge is not None:
-                claim_supported = judge(item, article)
-                if not claim_supported:
-                    issues.append("引句存在但不足以支持主张")
+                try:
+                    verdict = judge(item, article)
+                except Exception as exc:  # noqa: BLE001 - 语义判定失败不应拖垮整批
+                    logger.warning("语义判定失败 %s: %s", item.evidence_id, exc)
+                    verdict = None
+                if verdict is None:
+                    issues.append("语义判定未能完成")
+                else:
+                    claim_supported = verdict
+                    if not verdict:
+                        issues.append("引句存在但不足以支持主张")
             else:
                 claim_supported = quote_state
 
-            if (
-                resolver is not None
-                and identifier_check
-                and not resolver(item.pmid, item.doi)
-            ):
-                identifier_check = False
-                issues.append("标识符在线校验失败")
+            if resolver is not None and identifier_check:
+                online = resolver(item.pmid, item.doi)
+                if online is False:
+                    identifier_check = False
+                    issues.append("标识符在线校验失败")
+                elif online is None:
+                    issues.append("在线校验不可用（网络或服务错误）")
 
         status = _final_status(
             article=article,

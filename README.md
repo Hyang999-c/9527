@@ -12,7 +12,7 @@
 2. **去重**：PMID / DOI / 标题相似度（阈值 0.92）
 3. **全文补全**：有 PMCID 的文献抓取 PMC OA XML，失败则保留摘要
 4. **证据抽取**：LLM 按 `prompts/extract_evidence.md` 输出 JSON 证据条目（claim + 原文引句）
-5. **引用核查**：标识符是否存在、引句是否逐字出现在原文中
+5. **引用核查**：引句逐字定位、标题/来源可访问性核查；可选开启在线标识符校验与模型语义判定（默认关）
 6. **成稿**：Markdown 简报写入 `reports/`，三张 CSV 表写入 `data/exports/`，中间产物写入 `data/raw`、`data/processed`
 
 ## 快速开始
@@ -68,7 +68,7 @@ aspirin-research-agent/
 
 ## 配置
 
-- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、抽取批次、模型参数、报告标题
+- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、抽取批次、模型参数、报告标题，以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
 - `config/search_queries.yaml`：按主题分组的检索式，`--max-queries` 控制本轮使用前 N 条
 - 密钥只放 `.env`，不进入版本库
 
@@ -94,6 +94,6 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 - [x] 第一步：目录、依赖、Article / Evidence / Verification 模型与单元测试
 - [x] 第二步：PubMed 检索（限速/重试/超时/分批）、XML 解析、原始响应落盘、全文抓取、去重，均有离线测试与真实接口冒烟
 - [x] 第三步：LLM 客户端（超时/重试/JSON 模式回退）与结构化抽取、科学规则校验；已用真实 deepseek-chat 跑通 2 篇
-- [x] 第四步（部分）：引文定位、标识符/标题/可访问性核查与状态回写已实现；在线校验与语义 judge 待接线
+- [x] 第四步：引文定位、标识符/标题/可访问性核查、在线 esummary/Crossref 校验与语义 judge 均已接线（开关默认关）
 - [x] 第五步：调度、Markdown 报告、CSV/JSON 导出已实现；抽取失败清单待进报告
 - [ ] 真实 API 联调、CSV 导出、语义核查 judge、多轮检索

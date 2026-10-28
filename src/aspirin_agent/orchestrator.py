@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .schemas import ExtractionBatch, PipelineResult
 from .tools.article_fetch import enrich_articles
-from .tools.citation_verify import verify_citations
+from .tools.citation_verify import LLMJudge, PubMedResolver, verify_citations
 from .tools.csv_export import export_csvs
 from .tools.deduplication import deduplicate_records
 from .tools.evidence_extract import extract_batch
@@ -30,6 +30,8 @@ class Orchestrator:
         llm=None,
         searcher=None,
         workdir: str | Path | None = None,
+        resolver=None,
+        judge=None,
     ) -> None:
         self.settings = settings or {}
         paths = self.settings.get("paths", {})
@@ -43,6 +45,8 @@ class Orchestrator:
         self.max_results = int(self.settings.get("search", {}).get("max_results_per_query", 20))
         self.llm = llm
         self.searcher = searcher or PubMedSearcher(self.settings, raw_dir=self.paths["raw"])
+        self.resolver = resolver
+        self.judge = judge
 
     def _fetch_enabled(self) -> bool:
         return bool(self.settings.get("fetch", {}).get("fulltext", False))
@@ -77,7 +81,18 @@ class Orchestrator:
             else ExtractionBatch()
         )
         evidence = batch.evidence
-        verifications = verify_citations(evidence, unique)
+
+        verification_config = self.settings.get("verification", {})
+        resolver = self.resolver
+        if resolver is None and verification_config.get("online_check"):
+            resolver = PubMedResolver(limiter=getattr(self.searcher, "limiter", None))
+        judge = self.judge
+        if judge is None and verification_config.get("semantic_judge") and self.llm is not None:
+            judge = LLMJudge(self.llm)
+
+        verifications = verify_citations(
+            evidence, unique, resolver=resolver, judge=judge
+        )
         title = self.settings.get("report", {}).get("title", DEFAULT_TITLE)
         report = build_report(unique, evidence, verifications, question=question, title=title)
 

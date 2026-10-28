@@ -125,3 +125,35 @@ def test_pipeline_without_llm_still_reports(tmp_path) -> None:
     assert result.verifications == []
     assert result.report is not None
     assert "本轮未抽取到证据" in result.report.markdown
+
+
+def test_online_resolver_failure_marks_evidence_failed(tmp_path) -> None:
+    orchestrator = Orchestrator(
+        {"search": {"max_results_per_query": 3}},
+        llm=FakeLLM(),
+        searcher=FakeSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+        resolver=lambda pmid, doi: False,
+    )
+
+    result = orchestrator.run("在线核查")
+
+    assert result.verifications
+    assert all(check.final_status is VerificationStatus.FAILED for check in result.verifications)
+    assert any("在线校验失败" in issue for check in result.verifications for issue in check.issues)
+
+
+def test_judge_rejection_marks_evidence_failed(tmp_path) -> None:
+    orchestrator = Orchestrator(
+        {"search": {"max_results_per_query": 3}},
+        llm=FakeLLM(),
+        searcher=FakeSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+        judge=lambda item, article: False,
+    )
+
+    result = orchestrator.run("语义核查")
+
+    assert result.verifications
+    assert all(check.final_status is VerificationStatus.FAILED for check in result.verifications)
+    assert any("不足以支持" in issue for check in result.verifications for issue in check.issues)
