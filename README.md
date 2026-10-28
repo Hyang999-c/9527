@@ -105,7 +105,7 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 
 说明见 [eval/README.md](eval/README.md)；gold set 在 [eval/gold_set.yaml](eval/gold_set.yaml)。
 
-当前结果（auto-strict + 人工抽查）：v1 93%、v2 95%、v3 97%（5 篇）；扩到 12 篇后 134/135（99%），待人工抽查。
+当前结果（auto-strict + 人工抽查）：v1 93%、v2 95%、v3 97%（5 篇）；扩到 12 篇后 134/135（99%），人工抽查 10/10 一致。
 
 ## 进度
 
