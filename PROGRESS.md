@@ -92,7 +92,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（按优先级）
 
-1. **首批评测是 agent 预标注**（28/30），不是人工金标准；至少要抽查 10 条，尤其是被判 0 的 2 条。
+1. **评测标注仍不完整**：已人工抽查 10 条（含 1 条判 0），与预标 10/10 一致；剩余 20 条仍是预标，另 1 条判 0 未抽查。
 2. **min_confidence 未使用**：低置信度证据不筛。
 3. 单页检索：没有翻页，retmax 上限 1 万。
 4. 抽取失败清单只进 JSON/CSV，不进报告正文。
@@ -110,7 +110,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. ✅ 在线核查开关 + 语义 judge（已完成；真实跑 1 篇，online=True、claim=True）
 4. **收尾项**：min_confidence 过滤、失败清单进报告、检索分页
-5. **评测**：首批已完成（30 条，agent 预标注 28/30 = 93%，quote 逐字率 100%）；待人工抽查
+5. **评测**：首批 30 条，28/30 = 93%，quote 逐字率 100%；人工抽查 10/10 一致；剩余 20 条待标注
 
 ## 八、上次验证命令与结果（可复现）
 
