@@ -92,7 +92,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（按优先级）
 
-1. **评测是 auto-strict 模型预标**：v3 57/59（97%）仍为自动判定，判据校准过一版；需人工抽 10 条复核后才能当结论。
+1. **评测仍是小样本**：v3 auto-strict 57/59（97%），人工抽查 10 条 9/10 一致、人工口径 98%；但只有 5 篇文献，不能外推。
 2. **min_confidence 未使用**：低置信度证据不筛。
 3. 单页检索：没有翻页，retmax 上限 1 万。
 4. 抽取失败清单只进 JSON/CSV，不进报告正文。
@@ -110,7 +110,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. ✅ 在线核查开关 + 语义 judge（已完成；真实跑 1 篇，online=True、claim=True）
 4. **收尾项**：min_confidence 过滤、失败清单进报告、检索分页
-5. **评测**：v1 93%、v2 95%、v3 97%（59 条，RCT 覆盖翻倍）；auto-strict 预标，待人工复核；旧批次作废（见第九节）
+5. **评测**：v1 93%、v2 95%、v3 97%；v3 人工抽查 9/10 一致，人工口径 98%；旧批次作废（见第九节）
 
 ## 八、上次验证命令与结果（可复现）
 
@@ -137,10 +137,13 @@ coverage                     -> 87%
 | v3（一条证据只对应一个结果） | 59 | 57/59（97%） | 100% |
 
 结论：v3 把 RCT 的证据数从 7 提到 14，支持率 97%；剩下 2 条失败都是 claim 多写了
-quote 里没有的队列标签（Duke）。标注为 auto-strict 模型判定，需人工复核。
+quote 里没有的队列标签（Duke）。
 
 v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md）。
 真实冒烟 1 篇（PMID 35768902）：14 条证据、0 失败、14 条全部 passed。
+
+人工抽查 v3 10 条：9/10 一致。唯一分歧是 35768902-E03——auto-strict 因 claim 写了 quote 里没有的
+“Duke 队列”判不支持，人工认为队列标签属于文献背景，应算支持。按人工口径为 58/59（98%）。
 
 作废批次：20261028T050422Z、T053026Z、T053135Z、T053206Z（解析器修复前，含错误全文或抽取失败）。
 
