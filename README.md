@@ -4,7 +4,7 @@
 
 > 仅用于研究辅助，不构成医学建议。
 >
-> 当前进度、已知问题与接续方式见 [PROGRESS.md](PROGRESS.md)。
+> 当前进度、已知问题与接续方式见 [PROGRESS.md](PROGRESS.md)；成果总览见 [SUMMARY.md](SUMMARY.md)。
 
 ## 流水线
 
