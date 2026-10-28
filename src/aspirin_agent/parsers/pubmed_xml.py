@@ -100,9 +100,10 @@ def parse_articles(xml_text: str, source: str = "pubmed") -> list[Article]:
         pmid = _text(article, ".//MedlineCitation/PMID")
         if not pmid:
             continue
+        # 只取本篇 PubmedData 下的 ID；".//" 会把参考文献里的 ArticleId 也扫进来
         ids = {
             (node.get("IdType") or ""): (node.text or "").strip()
-            for node in article.findall(".//ArticleIdList/ArticleId")
+            for node in article.findall("PubmedData/ArticleIdList/ArticleId")
         }
         doi = ids.get("doi") or _text(article, ".//ELocationID[@EIdType='doi']")
         pmcid = ids.get("pmc")

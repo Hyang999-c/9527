@@ -71,7 +71,7 @@ def write_review(
         "",
         f"> {question}",
         "",
-        "规则：quote 必须覆盖 claim 中的全部事实要素，才标“支持”。",
+        "规则：quote 必须支持 claim 的核心结果，以及其中出现的剂量、数值、机制、因果；文献总体人群可作背景。",
         "先在 items.csv 填 supported / quote_verbatim（1/0），再跑 score_eval.py。",
         "",
     ]
@@ -107,6 +107,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default="eval/runs")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--no-fulltext", action="store_true")
+    parser.add_argument("--prompt", default=None, help="自定义抽取提示词路径")
+    parser.add_argument("--temperature", type=float, default=None)
+    parser.add_argument("--max-tokens", type=int, default=None)
     args = parser.parse_args(argv)
     load_dotenv()
 
@@ -132,14 +135,28 @@ def main(argv: list[str] | None = None) -> int:
         max_articles = int(settings.get("fetch", {}).get("max_articles", 40))
         articles = enrich_articles(articles, searcher=searcher, limit=max_articles)
 
+    prompt_template = (
+        Path(args.prompt).read_text(encoding="utf-8") if args.prompt else None
+    )
     extraction = settings.get("extraction", {})
+    temperature = (
+        args.temperature
+        if args.temperature is not None
+        else float(extraction.get("temperature", 0.1))
+    )
+    max_tokens = (
+        args.max_tokens
+        if args.max_tokens is not None
+        else int(extraction.get("max_tokens", 4000))
+    )
     batch = extract_batch(
         articles,
         question,
         llm,
         batch_size=int(extraction.get("batch_size", 5)),
-        temperature=float(extraction.get("temperature", 0.1)),
-        max_tokens=int(extraction.get("max_tokens", 2000)),
+        temperature=temperature,
+        max_tokens=max_tokens,
+        prompt_template=prompt_template,
     )
     checks = verify_citations(batch.evidence, articles)
     check_by_id = {check.evidence_id: check for check in checks}
@@ -195,6 +212,9 @@ def main(argv: list[str] | None = None) -> int:
         "evidence": len(item_rows),
         "extraction_failures": [failure.model_dump() for failure in batch.failures],
         "fulltext": not args.no_fulltext,
+        "prompt": args.prompt or "prompts/extract_evidence.md",
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }
     (run_dir / "meta.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"

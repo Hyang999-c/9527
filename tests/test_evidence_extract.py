@@ -200,6 +200,24 @@ def test_invalid_items_are_dropped() -> None:
     assert items[0].evidence_id == "1-E01"
 
 
+def test_batch_accepts_custom_prompt() -> None:
+    class CaptureLLM:
+        def __init__(self) -> None:
+            self.messages: list[dict] = []
+
+        def complete(self, messages: list[dict], **kwargs) -> str:
+            self.messages = messages
+            return json.dumps({"evidence": []})
+
+    llm = CaptureLLM()
+    batch = extract_batch(
+        [make_article()], "q", llm, prompt_template="CUSTOM {{TITLE}}"
+    )
+
+    assert batch.evidence == []
+    assert "CUSTOM" in llm.messages[1]["content"]
+
+
 def test_batch_collects_failures() -> None:
     class FlakyLLM:
         def __init__(self) -> None:

@@ -33,7 +33,8 @@ fetch:
 extraction:
   batch_size: 5
   temperature: 0.1
-  max_tokens: 2000
+  # 长全文一次会抽很多条，2000 容易截断 JSON；评测/生产都用 4000
+  max_tokens: 4000
   min_confidence: 0.5
 
 verification:

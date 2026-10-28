@@ -105,6 +105,8 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 
 说明见 [eval/README.md](eval/README.md)；gold set 在 [eval/gold_set.yaml](eval/gold_set.yaml)。
 
+当前结果（auto-strict 预标，待人工复核）：v1 40/43（93%），v2 42/44（95%）；两版失败模式相同，都是 claim 补了引句里没有的细节。
+
 ## 进度
 
 - [x] 第一步：目录、依赖、Article / Evidence / Verification 模型与单元测试

@@ -311,6 +311,7 @@ def extract_batch(
     batch_size: int = 5,
     temperature: float = 0.1,
     max_tokens: int = 2000,
+    prompt_template: str | None = None,
 ) -> ExtractionBatch:
     """逐篇抽取；单篇失败进 failures，不污染证据列表，也不假装成功。"""
     batch = ExtractionBatch()
@@ -324,6 +325,7 @@ def extract_batch(
                         article,
                         research_question,
                         llm,
+                        prompt_template=prompt_template,
                         temperature=temperature,
                         max_tokens=max_tokens,
                     )

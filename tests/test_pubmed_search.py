@@ -98,6 +98,27 @@ def test_search_parses_records_and_passes_params() -> None:
     assert "Aspirin reduced events." in record.abstract
 
 
+def test_reference_ids_do_not_override_article_ids() -> None:
+    xml = """<PubmedArticleSet><PubmedArticle>
+      <MedlineCitation><PMID>12345</PMID><Article>
+        <ArticleTitle>Own article</ArticleTitle>
+        <ReferenceList><Reference><ArticleIdList>
+          <ArticleId IdType="pmc">PMC_REFERENCE</ArticleId>
+          <ArticleId IdType="doi">10.9999/reference</ArticleId>
+        </ArticleIdList></Reference></ReferenceList>
+      </Article></MedlineCitation>
+      <PubmedData><ArticleIdList>
+        <ArticleId IdType="doi">10.1000/own</ArticleId>
+        <ArticleId IdType="pmc">PMC_OWN</ArticleId>
+      </ArticleIdList></PubmedData>
+    </PubmedArticle></PubmedArticleSet>"""
+
+    article = parse_articles(xml)[0]
+
+    assert article.pmcid == "PMC_OWN"
+    assert article.doi == "10.1000/own"
+
+
 def test_search_returns_empty_without_ids() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"esearchresult": {"idlist": []}})
