@@ -31,6 +31,8 @@ fetch:
   timeout_seconds: 30
 
 extraction:
+  # 当前最佳：v3（一条证据只对应一个结果）；v1/v2 保留用于 A/B
+  prompt: prompts/extract_evidence_v3.md
   batch_size: 5
   temperature: 0.1
   # 长全文一次会抽很多条，2000 容易截断 JSON；评测/生产都用 4000

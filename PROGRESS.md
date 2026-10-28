@@ -92,7 +92,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（按优先级）
 
-1. **评测是 auto-strict 模型预标**：v1 93% / v2 95% 均为自动判定，判据刚校准过一版；需人工抽 10 条复核后才能当结论。
+1. **评测是 auto-strict 模型预标**：v3 57/59（97%）仍为自动判定，判据校准过一版；需人工抽 10 条复核后才能当结论。
 2. **min_confidence 未使用**：低置信度证据不筛。
 3. 单页检索：没有翻页，retmax 上限 1 万。
 4. 抽取失败清单只进 JSON/CSV，不进报告正文。
@@ -110,13 +110,13 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. ✅ 在线核查开关 + 语义 judge（已完成；真实跑 1 篇，online=True、claim=True）
 4. **收尾项**：min_confidence 过滤、失败清单进报告、检索分页
-5. **评测**：解析器修复后重跑，v1 40/43（93%）、v2 42/44（95%）；auto-strict 预标，待人工复核；旧批次作废（见第九节）
+5. **评测**：v1 93%、v2 95%、v3 97%（59 条，RCT 覆盖翻倍）；auto-strict 预标，待人工复核；旧批次作废（见第九节）
 
 ## 八、上次验证命令与结果（可复现）
 
 ~~~text
 ruff check src tests scripts -> All checks passed!
-pytest                       -> 84 passed, 1 skipped
+pytest                       -> 86 passed, 1 skipped
 coverage                     -> 87%
 
 ## 九、评测记录（2026-10-28 13:32）
@@ -126,18 +126,21 @@ coverage                     -> 87%
 1. **参考文献 ID 覆盖本篇 ID**：解析器用 .//ArticleIdList 扫到了参考文献里的 ArticleId，
    PMID 35768902 自己的 PMCID（PMC9976777）被参考文献的 PMC2947304 覆盖，抓回来的全文是另一篇脂氧素论文。
    已改为只读 PubmedData/ArticleIdList，并加回归测试。
-2. **max_tokens=2000 截断 JSON**：长全文一次抽 10+ 条，输出被截断导致整篇失败。
-   默认提到 4000；评测固定 temperature=0。
+2. **长全文 JSON 截断**：一次抽 10+ 条时输出会被截断。默认提到 4000，并加了一次 8000 tokens 的自动重试。
 
-干净 A/B（5 篇，temperature=0，max_tokens=4000）：
+干净 A/B（5 篇，temperature=0）：
 
 | 版本 | 证据数 | 支持率 | quote 逐字率 |
 | --- | --- | --- | --- |
 | v1 | 43 | 40/43（93%） | 100% |
 | v2（claim 不得超出引句） | 44 | 42/44（95%） | 100% |
+| v3（一条证据只对应一个结果） | 59 | 57/59（97%） | 100% |
 
-结论：v2 高 2 个百分点、多抽 5 条 RCT 证据，但差距在噪声范围内；两版失败模式相同——
-claim 把引句里没有的“刺激物映射/人群细节”补了进去。标注为 auto-strict 模型判定，需人工复核。
+结论：v3 把 RCT 的证据数从 7 提到 14，支持率 97%；剩下 2 条失败都是 claim 多写了
+quote 里没有的队列标签（Duke）。标注为 auto-strict 模型判定，需人工复核。
+
+v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md）。
+真实冒烟 1 篇（PMID 35768902）：14 条证据、0 失败、14 条全部 passed。
 
 作废批次：20261028T050422Z、T053026Z、T053135Z、T053206Z（解析器修复前，含错误全文或抽取失败）。
 

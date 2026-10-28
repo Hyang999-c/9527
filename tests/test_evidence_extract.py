@@ -179,6 +179,24 @@ def test_empty_evidence_list_is_valid() -> None:
     assert extract_evidence(make_article(), "q", FakeLLM({"evidence": []})) == []
 
 
+def test_truncated_json_retries_with_bigger_budget() -> None:
+    class TruncatingLLM:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def complete(self, messages: list[dict], **kwargs) -> str:
+            self.calls += 1
+            if self.calls == 1:
+                return '{"evidence": [{"claim": "阿司匹林抑制血小板聚集"},'
+            return json.dumps({"evidence": [FULL_PAYLOAD]}, ensure_ascii=False)
+
+    llm = TruncatingLLM()
+    items = extract_evidence(make_article(), "q", llm)
+
+    assert llm.calls == 2
+    assert len(items) == 1
+
+
 def test_invalid_json_raises() -> None:
     class BadLLM:
         def complete(self, messages: list[dict], **kwargs) -> str:

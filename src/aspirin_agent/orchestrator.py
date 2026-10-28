@@ -68,6 +68,17 @@ class Orchestrator:
             unique = enrich_articles(unique, limit=limit, searcher=self.searcher)
 
         extraction = self.settings.get("extraction", {})
+        prompt_template = None
+        prompt_path = extraction.get("prompt")
+        if prompt_path:
+            path = Path(prompt_path)
+            if not path.is_absolute():
+                path = self.root / path
+            if path.exists():
+                prompt_template = path.read_text(encoding="utf-8")
+            else:
+                logger.warning("抽取提示词不存在，回退默认: %s", path)
+
         batch = (
             extract_batch(
                 unique,
@@ -75,7 +86,8 @@ class Orchestrator:
                 self.llm,
                 batch_size=int(extraction.get("batch_size", 5)),
                 temperature=float(extraction.get("temperature", 0.1)),
-                max_tokens=int(extraction.get("max_tokens", 2000)),
+                max_tokens=int(extraction.get("max_tokens", 4000)),
+                prompt_template=prompt_template,
             )
             if self.llm
             else ExtractionBatch()

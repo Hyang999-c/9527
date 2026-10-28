@@ -127,6 +127,31 @@ def test_pipeline_without_llm_still_reports(tmp_path) -> None:
     assert "本轮未抽取到证据" in result.report.markdown
 
 
+def test_custom_extraction_prompt_is_used(tmp_path) -> None:
+    prompt_file = tmp_path / "custom_prompt.md"
+    prompt_file.write_text("CUSTOM {{TITLE}}", encoding="utf-8")
+    seen: dict = {}
+
+    class CaptureLLM(FakeLLM):
+        def complete(self, messages: list[dict], **kwargs) -> str:
+            seen["messages"] = messages
+            return super().complete(messages, **kwargs)
+
+    orchestrator = Orchestrator(
+        {
+            "search": {"max_results_per_query": 3},
+            "extraction": {"prompt": str(prompt_file)},
+        },
+        llm=CaptureLLM(),
+        searcher=FakeSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    orchestrator.run("prompt test", ["q"])
+
+    assert "CUSTOM" in seen["messages"][1]["content"]
+
+
 def test_online_resolver_failure_marks_evidence_failed(tmp_path) -> None:
     orchestrator = Orchestrator(
         {"search": {"max_results_per_query": 3}},

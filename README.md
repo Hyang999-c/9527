@@ -68,7 +68,7 @@ aspirin-research-agent/
 
 ## 配置
 
-- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、抽取批次、模型参数、报告标题，以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
+- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、抽取批次、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v3），以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
 - `config/search_queries.yaml`：按主题分组的检索式，`--max-queries` 控制本轮使用前 N 条
 - 密钥只放 `.env`，不进入版本库
 
@@ -105,7 +105,7 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 
 说明见 [eval/README.md](eval/README.md)；gold set 在 [eval/gold_set.yaml](eval/gold_set.yaml)。
 
-当前结果（auto-strict 预标，待人工复核）：v1 40/43（93%），v2 42/44（95%）；两版失败模式相同，都是 claim 补了引句里没有的细节。
+当前结果（auto-strict 预标，待人工复核）：v1 93%、v2 95%、v3 97%（59 条）；v3 用一条证据只对应一个结果，RCT 覆盖从 7 条提到 14 条。
 
 ## 进度
 

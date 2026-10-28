@@ -284,7 +284,17 @@ def extract_evidence(
         {"role": "user", "content": render_prompt(template, article)},
     ]
     raw = llm.complete(messages, temperature=temperature, max_tokens=max_tokens, json_mode=True)
-    payloads = parse_json_payload(raw)
+    try:
+        payloads = parse_json_payload(raw)
+    except EvidenceExtractionError:
+        # 长全文可能把 JSON 截断；放大一次预算再试，仍失败就交给上层记 failure
+        if max_tokens >= 8000:
+            raise
+        logger.warning("模型输出疑似截断，PMID %s 以 8000 tokens 重试", article.pmid)
+        raw = llm.complete(
+            messages, temperature=temperature, max_tokens=8000, json_mode=True
+        )
+        payloads = parse_json_payload(raw)
 
     items: list[Evidence] = []
     for payload in payloads:
