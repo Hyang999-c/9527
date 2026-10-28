@@ -89,6 +89,22 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 
 测试默认走 `httpx.MockTransport` 与假 LLM，不依赖网络；真实接口另有一条冒烟测试，需显式开启。
 
+## 评测
+
+用一批真实文献检查“claim 是否被 quote 支持”，而不只是看程序跑没跑通。
+
+~~~powershell
+# 1. 抓文献 + 抽证据，生成标注表（会调用模型）
+.\.venv\Scripts\python.exe scripts\build_eval.py
+
+# 2. 填 eval\runs\<run_id>\items.csv 的 supported / quote_verbatim（1/0）
+
+# 3. 算 precision
+.\.venv\Scripts\python.exe scripts\score_eval.py eval\runs\<run_id>
+~~~
+
+说明见 [eval/README.md](eval/README.md)；gold set 在 [eval/gold_set.yaml](eval/gold_set.yaml)。
+
 ## 进度
 
 - [x] 第一步：目录、依赖、Article / Evidence / Verification 模型与单元测试

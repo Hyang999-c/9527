@@ -1,0 +1,20 @@
+# 评测集：按研究类型分层，覆盖综述、人体原始研究、临床前研究
+# 只用于评估抽取质量，不作为医学结论引用
+question: 阿司匹林的作用机制与药理学证据是什么？
+
+articles:
+  - pmid: "35768902"
+    stratum: human_rct
+    note: 低剂量阿司匹林与体重/BMI 的对照研究
+  - pmid: "413839"
+    stratum: human_primary
+    note: 1978 年口服阿司匹林抑制血小板前列腺素合成酶
+  - pmid: "25126950"
+    stratum: preclinical
+    note: 小鼠与人血小板、蛋白酶体抑制
+  - pmid: "2998640"
+    stratum: review
+    note: 1985 年血小板抑制药理学综述（仅摘要）
+  - pmid: "40991180"
+    stratum: review
+    note: 2024 年阿司匹林与巨噬细胞/炎症综述（仅摘要）

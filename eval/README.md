@@ -1,0 +1,30 @@
+# 评测说明
+
+目的：用一批人工可核对的真实文献，衡量“抽取出的 claim 是否被 quote 支持”，而不是只看程序是否跑通。
+
+## 流程
+
+1. 编辑 eval/gold_set.yaml，选 5–10 篇文献，标明 stratum（human_rct / human_primary / preclinical / review）。
+2. 生成评测批次（会调用模型）：
+
+   ~~~powershell
+   .\.venv\Scripts\python.exe scripts\build_eval.py
+   ~~~
+
+3. 打开 eval/runs/<run_id>/items.csv，逐行填写：
+   - supported：1 = quote 支持 claim；0 = 不支持；留空 = 未标注
+   - quote_verbatim：1 = quote 逐字出现在原文；0 = 有改动或找不到
+   - reviewer_note：可选备注
+4. 计算指标：
+
+   ~~~powershell
+   .\.venv\Scripts\python.exe scripts\score_eval.py eval\runs\<run_id>
+   ~~~
+
+输出 score.md：precision（按 stratum / statement_type 分组）、false positive 清单、quote 逐字率。
+
+## 注意
+
+- 评测批次写到 eval/runs/，已被 .gitignore 排除；gold_set.yaml 与脚本进版本库。
+- 标注时只看 claim 与 quote，不看程序给的 auto_status，避免被自动结果带偏。
+- 样本量 5–10 篇只能看方向，不要当成统计显著性结论。

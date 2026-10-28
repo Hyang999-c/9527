@@ -19,6 +19,9 @@ data/exports/*
 reports/*
 !reports/.gitkeep
 
+# 评测运行产物
+eval/runs/
+
 # 工具
 .pytest_cache/
 .ruff_cache/
