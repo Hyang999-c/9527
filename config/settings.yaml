@@ -1,0 +1,53 @@
+# 运行参数总入口。密钥只放 .env，环境变量优先于此处。
+app:
+  name: aspirin-research-agent
+  language: zh-CN
+
+paths:
+  base_dir: .
+  raw: data/raw
+  processed: data/processed
+  exports: data/exports
+  reports: reports
+
+search:
+  database: pubmed
+  base_url: https://eutils.ncbi.nlm.nih.gov/entrez/eutils
+  max_results_per_query: 20
+  timeout_seconds: 30
+  # 留空则按 NCBI 规则自动选择：无 key 3 次/秒，有 key 10 次/秒
+  rate_limit_per_second: null
+  retry_attempts: 3
+  retry_backoff_seconds: 1.0
+  efetch_batch_size: 200
+  sort: relevance
+  date_range:
+    from: 2015
+    to: null
+
+fetch:
+  fulltext: true
+  max_articles: 40
+  timeout_seconds: 30
+
+extraction:
+  batch_size: 5
+  temperature: 0.1
+  max_tokens: 2000
+  min_confidence: 0.5
+
+verification:
+  require_identifier: true
+  require_quote: true
+
+llm:
+  provider: openai-compatible
+  base_url: https://api.deepseek.com/v1
+  model: deepseek-chat
+  timeout_seconds: 90
+  max_retries: 3
+  retry_backoff_seconds: 1.0
+
+report:
+  title: 阿司匹林研究证据简报
+  language: zh-CN

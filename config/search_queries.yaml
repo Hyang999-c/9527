@@ -1,0 +1,25 @@
+# 检索式分组。main.py 按顺序展开，--max-queries 截断。
+groups:
+  - id: secondary_prevention
+    topic: 二级预防
+    queries:
+      - 'aspirin[Title/Abstract] AND secondary prevention[Title/Abstract] AND (randomized controlled trial[Publication Type] OR meta-analysis[Publication Type])'
+      - 'aspirin[Title/Abstract] AND recurrent cardiovascular events[Title/Abstract]'
+
+  - id: primary_prevention
+    topic: 一级预防
+    queries:
+      - 'aspirin[Title/Abstract] AND primary prevention[Title/Abstract] AND (randomized controlled trial[Publication Type] OR meta-analysis[Publication Type])'
+      - 'aspirin[Title/Abstract] AND cardiovascular risk[Title/Abstract] AND bleeding[Title/Abstract]'
+
+  - id: bleeding_safety
+    topic: 出血风险
+    queries:
+      - 'aspirin[Title/Abstract] AND gastrointestinal bleeding[Title/Abstract]'
+      - 'aspirin[Title/Abstract] AND intracranial hemorrhage[Title/Abstract]'
+
+  - id: mechanism
+    topic: 作用机制
+    queries:
+      - 'aspirin[Title/Abstract] AND cyclooxygenase[Title/Abstract] AND thromboxane[Title/Abstract]'
+      - 'aspirin[Title/Abstract] AND inflammation[Title/Abstract] AND platelet[Title/Abstract]'
