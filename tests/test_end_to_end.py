@@ -28,6 +28,7 @@ class FakeLLM:
                     {
                         "claim": "阿司匹林降低二级预防中的严重血管事件",
                         "evidence_type": "primary_result",
+                        "statement_type": "fact",
                         "study_model": "human",
                         "methods": "随机对照试验",
                         "reported_results": "RR 0.81",

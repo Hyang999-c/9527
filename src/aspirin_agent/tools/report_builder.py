@@ -11,6 +11,7 @@ from ..schemas import (
     FullTextStatus,
     PublicationType,
     Report,
+    StatementType,
     Verification,
     VerificationStatus,
 )
@@ -21,6 +22,13 @@ EVIDENCE_TYPE_LABELS = {
     EvidenceType.REVIEW_SUMMARY: "综述转述",
     EvidenceType.MECHANISM: "机制证据",
     EvidenceType.OTHER: "其他",
+}
+
+STATEMENT_TYPE_LABELS = {
+    StatementType.FACT: "原文事实",
+    StatementType.AUTHOR_INTERPRETATION: "作者解释",
+    StatementType.MODEL_INFERENCE: "模型推断",
+    StatementType.UNCLEAR: "未说明",
 }
 
 STUDY_MODEL_LABELS = {
@@ -125,6 +133,7 @@ def build_markdown(
             f"- 证据 ID：{item.evidence_id}（PMID {item.pmid}）",
             (
                 f"- 证据类型：{EVIDENCE_TYPE_LABELS.get(item.evidence_type, '其他')}；"
+                f"陈述类型：{STATEMENT_TYPE_LABELS.get(item.statement_type, '未说明')}；"
                 f"研究模型：{STUDY_MODEL_LABELS.get(item.study_model.value, '未说明')}"
             ),
             f"- 方法：{_text_or_missing(item.methods)}",

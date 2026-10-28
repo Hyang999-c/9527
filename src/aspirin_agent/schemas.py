@@ -50,6 +50,15 @@ class EvidenceType(str, Enum):
     OTHER = "other"
 
 
+class StatementType(str, Enum):
+    """区分原文事实、作者解释与模型推断。"""
+
+    FACT = "fact"
+    AUTHOR_INTERPRETATION = "author_interpretation"
+    MODEL_INFERENCE = "model_inference"
+    UNCLEAR = "unclear"
+
+
 class FullTextStatus(str, Enum):
     NOT_FETCHED = "not_fetched"
     ABSTRACT_ONLY = "abstract_only"
@@ -143,6 +152,7 @@ class Evidence(BaseModel):
     research_question: str
     claim: str = Field(min_length=5)
     evidence_type: EvidenceType = EvidenceType.OTHER
+    statement_type: StatementType = StatementType.UNCLEAR
     study_model: StudyModel = StudyModel.UNCLEAR
     methods: str | None = None
     reported_results: str | None = None

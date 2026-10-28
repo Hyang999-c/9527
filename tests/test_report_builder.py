@@ -6,6 +6,7 @@ from aspirin_agent.schemas import (
     FullTextStatus,
     PublicationType,
     SourceLocation,
+    StatementType,
     StudyModel,
     Verification,
     VerificationStatus,
@@ -28,6 +29,7 @@ def test_report_contains_traceable_sections() -> None:
         pmid="1",
         research_question="q",
         claim="阿司匹林降低严重血管事件",
+        statement_type=StatementType.AUTHOR_INTERPRETATION,
         study_model=StudyModel.HUMAN,
         source_location=SourceLocation(locator="abstract", quote="aspirin reduced events"),
         confidence=0.7,
@@ -51,6 +53,7 @@ def test_report_contains_traceable_sections() -> None:
     assert "1-E01" in markdown
     assert "阿司匹林降低严重血管事件" in markdown
     assert "https://pubmed.ncbi.nlm.nih.gov/1/" in markdown
+    assert "陈述类型：作者解释" in markdown
     assert "部分通过" in markdown
     assert "仅摘要" in markdown
     assert "未报告" in markdown

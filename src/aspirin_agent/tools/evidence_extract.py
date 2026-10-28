@@ -24,6 +24,7 @@ from ..schemas import (
     FullTextStatus,
     PublicationType,
     SourceLocation,
+    StatementType,
     StudyModel,
 )
 from ..utils.logging_utils import get_logger
@@ -62,6 +63,7 @@ class _DraftLocation(BaseModel):
 class _EvidenceDraft(BaseModel):
     claim: str = Field(min_length=5)
     evidence_type: str = "other"
+    statement_type: str = "unclear"
     study_model: str = "unclear"
     methods: str | None = None
     reported_results: str | None = None
@@ -69,7 +71,7 @@ class _EvidenceDraft(BaseModel):
     limitations: str | None = None
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
-    @field_validator("claim", "evidence_type", "study_model", mode="before")
+    @field_validator("claim", "evidence_type", "statement_type", "study_model", mode="before")
     @classmethod
     def _strip_strings(cls, value: object) -> object:
         if isinstance(value, str):
@@ -228,6 +230,13 @@ def _evidence_type(article: Article, raw: object, notes: list[str]) -> EvidenceT
     return evidence_type
 
 
+def _statement_type(raw: object, notes: list[str]) -> StatementType:
+    value = _coerce_enum(StatementType, raw, StatementType.UNCLEAR)
+    if value is StatementType.MODEL_INFERENCE:
+        notes.append("模型自述为推断，不作为原文事实；核查只依据引句")
+    return value
+
+
 def _to_evidence(
     draft: _EvidenceDraft,
     *,
@@ -239,6 +248,7 @@ def _to_evidence(
     location, location_notes = _normalize_location(draft.source_location, article)
     notes.extend(location_notes)
     evidence_type = _evidence_type(article, draft.evidence_type, notes)
+    statement_type = _statement_type(draft.statement_type, notes)
 
     return Evidence(
         evidence_id=f"{article.pmid}-E{index:02d}",
@@ -247,6 +257,7 @@ def _to_evidence(
         research_question=research_question,
         claim=draft.claim,
         evidence_type=evidence_type,
+        statement_type=statement_type,
         study_model=_coerce_enum(StudyModel, draft.study_model, StudyModel.UNCLEAR),
         methods=_clean(draft.methods),
         reported_results=_clean(draft.reported_results),

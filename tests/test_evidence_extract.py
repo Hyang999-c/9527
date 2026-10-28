@@ -10,6 +10,7 @@ from aspirin_agent.schemas import (
     EvidenceType,
     FullTextStatus,
     PublicationType,
+    StatementType,
     StudyModel,
     VerificationStatus,
 )
@@ -18,6 +19,7 @@ from aspirin_agent.tools.evidence_extract import extract_batch, extract_evidence
 FULL_PAYLOAD = {
     "claim": "阿司匹林降低二级预防中的严重血管事件",
     "evidence_type": "primary_result",
+    "statement_type": "fact",
     "study_model": "human",
     "methods": "随机双盲对照试验",
     "reported_results": "RR 0.81 (95% CI 0.75-0.87)",
@@ -64,6 +66,7 @@ def test_extract_maps_all_fields() -> None:
     assert item.pmid == "1"
     assert item.research_question == "阿司匹林是否降低血管事件"
     assert item.evidence_type is EvidenceType.PRIMARY_RESULT
+    assert item.statement_type is StatementType.FACT
     assert item.study_model is StudyModel.HUMAN
     assert item.reported_results == "RR 0.81 (95% CI 0.75-0.87)"
     assert item.source_location.locator == "abstract"
@@ -143,6 +146,7 @@ def test_unknown_enum_values_fall_back() -> None:
     item = extract_evidence(make_article(), "q", FakeLLM(payload))[0]
 
     assert item.evidence_type is EvidenceType.OTHER
+    assert item.statement_type is StatementType.UNCLEAR
     assert item.study_model is StudyModel.UNCLEAR
 
 
@@ -158,6 +162,17 @@ def test_numeric_fields_are_coerced() -> None:
     assert item.methods == "2019"
     assert item.reported_results == "0.81"
     assert item.source_location.paragraph == "1"
+
+
+def test_model_inference_is_flagged() -> None:
+    payload = {
+        "claim": "阿司匹林可能通过其他途径降低风险",
+        "statement_type": "model_inference",
+    }
+    item = extract_evidence(make_article(), "q", FakeLLM({"evidence": [payload]}))[0]
+
+    assert item.statement_type is StatementType.MODEL_INFERENCE
+    assert any("推断" in note for note in item.validation_notes)
 
 
 def test_empty_evidence_list_is_valid() -> None:
