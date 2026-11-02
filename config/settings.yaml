@@ -25,6 +25,8 @@ search:
   # 第二轮：按 ELink related articles 扩展
   expand:
     enabled: true
+    rounds: 2
+    max_total: 60
     seeds: 3
     max_related: 10
     citations: true

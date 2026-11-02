@@ -178,6 +178,50 @@ def test_citation_chasing_adds_articles(tmp_path) -> None:
     assert result.stats["citation_fetched"] == 1
 
 
+def test_recursive_expansion_runs_multiple_rounds(tmp_path) -> None:
+    class GrowingSearcher(FakeSearcher):
+        def __init__(self, articles: list[Article]) -> None:
+            super().__init__(articles)
+            self.expand_calls = 0
+
+        def expand_related(self, pmids: list[str], max_results: int = 10) -> list[Article]:
+            self.expand_calls += 1
+            return [
+                Article(
+                    pmid=str(9000 + self.expand_calls),
+                    title=(
+                        "Platelet aggregation after aspirin"
+                        if self.expand_calls == 1
+                        else "Pharmacokinetics of enteric aspirin"
+                    ),
+                    abstract="related",
+                )
+            ]
+
+    orchestrator = Orchestrator(
+        {
+            "search": {
+                "max_results_per_query": 3,
+                "expand": {
+                    "enabled": True,
+                    "rounds": 2,
+                    "seeds": 1,
+                    "max_total": 10,
+                },
+            }
+        },
+        llm=FakeLLM(),
+        searcher=GrowingSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    result = orchestrator.run("递归扩展测试")
+
+    assert [article.pmid for article in result.articles] == ["1", "9001", "9002"]
+    assert result.stats["related_fetched"] == 2
+    assert result.stats["expansion_rounds"] == 2
+
+
 def test_extraction_failure_is_reported(tmp_path) -> None:
     class FailingLLM:
         def complete(self, messages: list[dict], **kwargs) -> str:

@@ -64,44 +64,10 @@ class Orchestrator:
         duplicates_removed = len(found) - len(unique)
         logger.info("检索 %d 篇，去重后 %d 篇", len(found), len(unique))
 
-        related_count = 0
         expand_config = self.settings.get("search", {}).get("expand", {})
-        if expand_config.get("enabled") and unique:
-            expand_fn = getattr(self.searcher, "expand_related", None)
-            if expand_fn is not None:
-                seeds = [
-                    article.pmid
-                    for article in unique[: int(expand_config.get("seeds", 3))]
-                ]
-                try:
-                    extra = expand_fn(seeds, int(expand_config.get("max_related", 10)))
-                    before = len(unique)
-                    unique = deduplicate_records(unique + extra)
-                    related_count = len(unique) - before
-                    logger.info("相关文献扩展：新增 %d 篇", related_count)
-                except Exception as exc:  # noqa: BLE001 - 扩展失败不阻断主流程
-                    logger.warning("相关文献扩展失败: %s", exc)
-
-        citation_count = 0
-        if expand_config.get("citations") and unique:
-            citation_fn = getattr(self.searcher, "expand_citations", None)
-            if citation_fn is not None:
-                seeds = [
-                    article.pmid
-                    for article in unique[: int(expand_config.get("seeds", 3))]
-                ]
-                try:
-                    extra = citation_fn(
-                        seeds,
-                        int(expand_config.get("max_refs", 5)),
-                        int(expand_config.get("max_cited", 5)),
-                    )
-                    before = len(unique)
-                    unique = deduplicate_records(unique + extra)
-                    citation_count = len(unique) - before
-                    logger.info("引文追溯：新增 %d 篇", citation_count)
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("引文追溯失败: %s", exc)
+        unique, related_count, citation_count, rounds_done = self._expand_articles(
+            unique, expand_config
+        )
 
         if self._fetch_enabled():
             limit = self.settings.get("fetch", {}).get("max_articles")
@@ -175,6 +141,7 @@ class Orchestrator:
                 "duplicates_removed": duplicates_removed,
                 "related_fetched": related_count,
                 "citation_fetched": citation_count,
+                "expansion_rounds": rounds_done,
                 "evidence_items": len(evidence),
                 "extraction_failures": len(batch.failures),
                 "low_confidence_filtered": len(filtered),
@@ -186,6 +153,83 @@ class Orchestrator:
         )
         self._persist(result)
         return result
+
+    def _expand_articles(
+        self, articles: list, config: dict
+    ) -> tuple[list, int, int, int]:
+        """按 rounds 递归扩展相关文献与引文；返回 (文章, 相关数, 引文数, 轮数)。"""
+        if not articles or not (config.get("enabled") or config.get("citations")):
+            return articles, 0, 0, 0
+
+        related_fn = getattr(self.searcher, "expand_related", None)
+        citation_fn = getattr(self.searcher, "expand_citations", None)
+        if related_fn is None and citation_fn is None:
+            return articles, 0, 0, 0
+
+        rounds = max(1, int(config.get("rounds", 1)))
+        seed_limit = max(1, int(config.get("seeds", 3)))
+        max_total = max(1, int(config.get("max_total", 60)))
+
+        seen = {article.pmid for article in articles}
+        expanded: set[str] = set()
+        frontier = list(articles)
+        related_total = citation_total = rounds_done = 0
+
+        for _ in range(rounds):
+            seeds = [
+                article.pmid
+                for article in frontier[:seed_limit]
+                if article.pmid not in expanded
+            ]
+            if not seeds:
+                break
+            expanded.update(seeds)
+            rounds_done += 1
+
+            new_related = []
+            if related_fn is not None and config.get("enabled"):
+                try:
+                    for article in related_fn(seeds, int(config.get("max_related", 10))):
+                        if article.pmid not in seen:
+                            seen.add(article.pmid)
+                            new_related.append(article)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("相关文献扩展失败: %s", exc)
+
+            new_cited = []
+            if citation_fn is not None and config.get("citations"):
+                try:
+                    for article in citation_fn(
+                        seeds,
+                        int(config.get("max_refs", 5)),
+                        int(config.get("max_cited", 5)),
+                    ):
+                        if article.pmid not in seen:
+                            seen.add(article.pmid)
+                            new_cited.append(article)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("引文追溯失败: %s", exc)
+
+            new_articles = new_related + new_cited
+            if not new_articles:
+                break
+            related_total += len(new_related)
+            citation_total += len(new_cited)
+            before = len(articles)
+            articles = deduplicate_records(articles + new_articles)
+            if len(articles) == before:
+                break
+            frontier = new_articles
+            if len(articles) >= max_total:
+                break
+
+        logger.info(
+            "扩展 %d 轮：相关 %d 篇、引文 %d 篇",
+            rounds_done,
+            related_total,
+            citation_total,
+        )
+        return articles[:max_total], related_total, citation_total, rounds_done
 
     def _persist(self, result: PipelineResult) -> None:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

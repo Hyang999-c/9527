@@ -97,7 +97,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 3. utils/retry.py（tenacity）与 searcher 手写重试并存，可择一统一。
 4. 语义 judge 会增加模型调用成本，目前无缓存/批量优化。
 5. 在线核查每次重跑都会重复请求，未做本地缓存。
-6. 引文追溯依赖 PMC 链接，覆盖不全；未做递归多轮。
+6. 递归扩展无相关性阈值，可能引入噪声。
 
 ## 七、明天从这里开始
 
@@ -114,7 +114,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ~~~text
 ruff check src tests scripts -> All checks passed!
-pytest                       -> 99 passed, 1 skipped
+pytest                       -> 100 passed, 1 skipped
 coverage                     -> 87%
 ~~~
 
@@ -180,7 +180,8 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 - 抽取失败清单进报告正文（新增“抽取失败”小节）
 - ESearch 按 `page_size` 自动翻页（retstart）
 - 报告页脚增加 PMC 开放获取与转载许可提示
-- 多轮检索：ELink related articles + 参考文献/被引追溯，seeds/max_refs/max_cited 可配，--no-expand 关闭；真实冒烟各扩到 4 篇
+- 多轮检索：ELink related articles + 参考文献/被引追溯，rounds/max_total 支持递归，--no-expand 关闭；真实冒烟 2 轮新增 3 篇
+- git 远端：D:\Apps\大肥鱼\git-remotes\aspirin-research-agent.git（本机 bare，已 push main）
 - 冗余评测：161 条中近似重复 1 条（1%），判重带数字守卫
 - PMC 逐篇许可：解析 license/license_url/copyright，写入 Article，报告与 CSV 展示；真实取到 CC BY 4.0
 - 许可兼容性：按 CC 链接分类（CC0/BY/SA/NC/NC-SA/NC-ND），报告与 CSV 标注可商用/可改作

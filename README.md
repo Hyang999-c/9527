@@ -122,6 +122,6 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 - [x] 第三步：LLM 客户端（超时/重试/JSON 模式回退）与结构化抽取、科学规则校验；已用真实 deepseek-chat 跑通 2 篇
 - [x] 第四步：引文定位、标识符/标题/可访问性核查、在线 esummary/Crossref 校验与语义 judge 均已接线（开关默认关）
 - [x] 第五步：调度、Markdown/CSV/JSON、低置信度过滤、失败清单、检索翻页、PMC 许可声明
-- [x] 多轮检索：ELink 相关扩展 + 参考文献/被引追溯（可关闭）
+- [x] 多轮检索：ELink 相关扩展 + 参考文献/被引追溯，支持 rounds 递归（可关闭）
 - [x] 真实 API 联调、CSV 导出、语义核查 judge
-- [ ] per-article PMC 许可、冗余量化
+- [ ] GitHub 远端（当前为本机 bare 仓库）、递归相关性过滤
