@@ -182,7 +182,7 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 - ESearch 按 `page_size` 自动翻页（retstart）
 - 报告页脚增加 PMC 开放获取与转载许可提示
 - 多轮检索：ELink related articles + 参考文献/被引追溯，rounds/max_total 支持递归，--no-expand 关闭；真实冒烟 2 轮新增 3 篇
-- git 远端：origin = GitHub（main 已推送）；local = 本机 bare 备份。DNS 绕行 http.curloptResolve=github.com:443:140.82.112.4
+- git 远端：origin = GitHub（main 已推送至 15b8099）；local = 本机 bare 备份。DNS 被污染时用 git -c http.curloptResolve=github.com:443:140.82.112.4 push origin main（IP 可能变化，先 curl 探测）
 - 冗余评测：161 条中近似重复 1 条（1%），判重带数字守卫
 - PMC 逐篇许可：解析 license/license_url/copyright，写入 Article，报告与 CSV 展示；真实取到 CC BY 4.0
 - 许可兼容性：按 CC 链接分类（CC0/BY/SA/NC/NC-SA/NC-ND），报告与 CSV 标注可商用/可改作
