@@ -26,6 +26,15 @@ gold set 现有 12 篇，auto-strict 134/135（99%），人工抽查 10/10 一�
 
 输出 score.md：precision（按 stratum / statement_type 分组）、false positive 清单、quote 逐字率。
 
+## 召回评测
+
+~~~powershell
+..venvScriptspython.exe scriptsecall_eval.py evaluns<run_id>
+~~~
+
+用 eval/recall_gold.yaml 里人工编写的关键结论，逐条判断抽出的证据是否覆盖；
+输出 recall.md / recall.json，未覆盖项会列出原因。方法类金标（kind: method）不计入召回。
+
 ## 注意
 
 - 评测批次写到 eval/runs/，已被 .gitignore 排除；gold_set.yaml 与脚本进版本库。

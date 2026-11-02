@@ -107,6 +107,14 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 
 当前结果（auto-strict + 人工抽查）：v1 93%、v2 95%、v3 97%（5 篇）；扩到 12 篇后 134/135（99%），人工抽查 10/10 一致。
 
+### 召回评测
+
+~~~powershell
+..venvScriptspython.exe scriptsecall_eval.py evaluns<run_id>
+~~~
+
+4 篇 / 18 条关键结论：**15/18（83%）**，漏项集中在作者解释、适用性声明与绝对风险。
+
 ## 进度
 
 - [x] 第一步：目录、依赖、Article / Evidence / Verification 模型与单元测试
@@ -114,4 +122,5 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 - [x] 第三步：LLM 客户端（超时/重试/JSON 模式回退）与结构化抽取、科学规则校验；已用真实 deepseek-chat 跑通 2 篇
 - [x] 第四步：引文定位、标识符/标题/可访问性核查、在线 esummary/Crossref 校验与语义 judge 均已接线（开关默认关）
 - [x] 第五步：调度、Markdown 报告、CSV/JSON 导出已实现；抽取失败清单待进报告
-- [ ] 真实 API 联调、CSV 导出、语义核查 judge、多轮检索
+- [x] 真实 API 联调、CSV 导出、语义核查 judge
+- [ ] 召回评测补强（当前 83%）、多轮检索、失败清单进报告

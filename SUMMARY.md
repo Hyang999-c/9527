@@ -67,8 +67,10 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 | v2 | 44 | 95% | 12 |
 | v3（一条证据一个结果） | 59 | 97% | 14 |
 
-评测工具：eval/gold_set.yaml、scripts/build_eval.py、scripts/score_eval.py、scripts/auto_label_eval.py。
-最新结果：eval/runs/20261028T094017Z/score.md。
+召回评测（4 篇 / 18 条关键结论）：**15/18（83%）**，漏项集中在作者解释、适用性声明与绝对风险。
+
+评测工具：eval/gold_set.yaml、eval/recall_gold.yaml、scripts/build_eval.py、scripts/score_eval.py、scripts/auto_label_eval.py、scripts/recall_eval.py。
+最新结果：eval/runs/20261028T094017Z/score.md 与 recall.md。
 
 ## 六、过程中修掉的真实缺陷
 
@@ -81,7 +83,7 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 
 ## 七、边界与未完成
 
-- **召回率未测**：只知道抽出来的对不对，不知道漏了多少
+- **召回 83%**：4 篇 18 条关键结论，漏作者解释、适用性声明、绝对风险
 - **冗余未量化**：v3 拆条会产生碎片化，135 条里可能有重复结论
 - 评测只有 12 篇、135 条，且主要是 auto-strict 判定
 - min_confidence 未用于过滤

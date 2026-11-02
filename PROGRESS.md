@@ -92,7 +92,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（按优先级）
 
-1. **评测仍以小样本为主**：12 篇 135 条，134/135（99%），人工抽查 10/10 一致；但抽查含已知失败、非纯随机，不能外推。
+1. **评测仍以小样本为主**：12 篇 135 条，134/135（99%），人工抽查 10/10 一致；召回 15/18（83%），漏作者解释/适用性/绝对风险。
 2. **min_confidence 未使用**：低置信度证据不筛。
 3. 单页检索：没有翻页，retmax 上限 1 万。
 4. 抽取失败清单只进 JSON/CSV，不进报告正文。
@@ -118,6 +118,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 ruff check src tests scripts -> All checks passed!
 pytest                       -> 86 passed, 1 skipped
 coverage                     -> 87%
+~~~
 
 ## 九、评测记录（2026-10-28 13:32）
 
@@ -156,4 +157,13 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 
 作废批次：20261028T050422Z、T053026Z、T053135Z、T053206Z（解析器修复前，含错误全文或抽取失败）。
 
-~~~
+## 十、召回评测（2026-11-02）
+
+- 4 篇 / 18 条关键结论（2 条方法类金标已排除）
+- 覆盖 15/18（83%）
+- 未覆盖：
+  - R5：作者推测“体重增加降低预防效力可能由其他机制解释”
+  - A5：“中等风险人群的问题未能回答”这半句
+  - G5：每 1000 人服用 10 年的绝对风险估计（1 例死亡 + 1 例致残性卒中）
+- 结论：抽取偏重“结果”，漏“作者解释 / 适用性声明 / 绝对风险”
+- 脚本：scripts/recall_eval.py；金标：eval/recall_gold.yaml
