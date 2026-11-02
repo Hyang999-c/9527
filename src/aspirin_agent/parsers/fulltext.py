@@ -39,6 +39,43 @@ def parse_pmc_xml(xml_text: str) -> dict[str, str]:
     return sections
 
 
+XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
+
+
+def parse_pmc_permissions(xml_text: str) -> dict[str, str | None]:
+    """从 PMC XML 提取许可证、许可链接与版权声明。"""
+    if not xml_text.strip():
+        return {}
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return {}
+
+    license_node = root.find(".//permissions/license")
+    copyright_node = root.find(".//permissions/copyright-statement")
+
+    license_text = None
+    license_url = None
+    if license_node is not None:
+        paragraphs = license_node.findall(".//license-p")
+        if paragraphs:
+            license_text = _clean(" ".join("".join(p.itertext()) for p in paragraphs))
+        else:
+            license_text = _clean("".join(license_node.itertext()))
+        license_url = license_node.get(XLINK_HREF) or license_node.get("href")
+        if license_text and license_url:
+            license_text = license_text.replace(license_url, "").strip(" /") or None
+
+    copyright_text = (
+        _clean("".join(copyright_node.itertext())) if copyright_node is not None else None
+    )
+    return {
+        "license": license_text,
+        "license_url": license_url,
+        "copyright": copyright_text or None,
+    }
+
+
 class _TextExtractor(HTMLParser):
     _BLOCK_TAGS: ClassVar[set[str]] = {
         "p",

@@ -10,7 +10,7 @@
 
 1. **检索**：NCBI E-utilities（ESearch + EFetch），ELink 相关文献扩展与参考文献/被引追溯（`--no-expand` 关闭），检索式见 `config/search_queries.yaml`
 2. **去重**：PMID / DOI / 标题相似度（阈值 0.92）
-3. **全文补全**：有 PMCID 的文献抓取 PMC OA XML，失败则保留摘要
+3. **全文补全**：有 PMCID 的文献抓取 PMC OA XML，同时提取许可与版权；失败则保留摘要
 4. **证据抽取**：LLM 按 `prompts/extract_evidence.md` 输出 JSON 证据条目（claim + 原文引句）
 5. **引用核查**：引句逐字定位、标题/来源可访问性核查；可选开启在线标识符校验与模型语义判定（默认关）
 6. **成稿**：Markdown 简报写入 `reports/`，三张 CSV 表写入 `data/exports/`，中间产物写入 `data/raw`、`data/processed`

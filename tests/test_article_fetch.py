@@ -6,8 +6,16 @@ from aspirin_agent.schemas import Article, FullTextStatus
 from aspirin_agent.tools.article_fetch import fetch_articles, fetch_fulltext
 from aspirin_agent.tools.pubmed_search import PubMedSearcher
 
-PMC_XML = """<article>
-  <front><abstract><p>Background text.</p></abstract></front>
+PMC_XML = """<article xmlns:xlink="http://www.w3.org/1999/xlink">
+  <front>
+    <article-meta>
+      <permissions>
+        <license xlink:href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</license>
+        <copyright-statement>© 2020 Authors</copyright-statement>
+      </permissions>
+    </article-meta>
+    <abstract><p>Background text.</p></abstract>
+  </front>
   <body>
     <sec><title>Results</title><p>Aspirin reduced major events.</p></sec>
   </body>
@@ -40,6 +48,9 @@ def test_fetch_fulltext_marks_available() -> None:
     assert "reduced major events" in (updated.fulltext or "")
     assert updated.fulltext_status is FullTextStatus.FULLTEXT_AVAILABLE
     assert updated.pmid == "1"
+    assert updated.license == "CC BY 4.0"
+    assert updated.license_url == "https://creativecommons.org/licenses/by/4.0/"
+    assert updated.copyright == "© 2020 Authors"
 
 
 def test_skip_without_pmcid() -> None:

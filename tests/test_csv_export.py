@@ -32,6 +32,9 @@ def make_data():
         publication_type=PublicationType.RCT,
         abstract="aspirin reduced events",
         fulltext_status=FullTextStatus.ABSTRACT_ONLY,
+        license="CC BY 4.0",
+        license_url="https://creativecommons.org/licenses/by/4.0/",
+        copyright="© 2020 Authors",
     )
     item = Evidence(
         evidence_id="1-E01",
@@ -92,6 +95,8 @@ def test_row_values_are_flat(tmp_path) -> None:
     assert article_row["authors"] == "Li Wei; Zhou Yang"
     assert article_row["missing_fields"] == "doi"
     assert article_row["publication_type"] == "rct"
+    assert article_row["license"] == "CC BY 4.0"
+    assert article_row["license_url"].endswith("by/4.0/")
 
     evidence_row = read_rows(paths["evidence"])[0]
     assert evidence_row["statement_type"] == "fact"

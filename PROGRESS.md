@@ -93,7 +93,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 ## 六、已知问题（按优先级）
 
 1. **评测仍以小样本为主**：v6 12 篇 161 条，158/161（98%），召回 18/18，人工抽查 10/10；剩余 2 条 auto 失败未抽到。
-2. PMC 全文许可声明已加，但逐篇许可/署名仍未处理。
+2. PMC 许可已逐篇提取（license/license_url/copyright）并进报告/CSV；未做许可兼容性校验。
 3. utils/retry.py（tenacity）与 searcher 手写重试并存，可择一统一。
 4. 语义 judge 会增加模型调用成本，目前无缓存/批量优化。
 5. 在线核查每次重跑都会重复请求，未做本地缓存。
@@ -182,4 +182,5 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 - 报告页脚增加 PMC 开放获取与转载许可提示
 - 多轮检索：ELink related articles + 参考文献/被引追溯，seeds/max_refs/max_cited 可配，--no-expand 关闭；真实冒烟各扩到 4 篇
 - 冗余评测：161 条中近似重复 1 条（1%），判重带数字守卫
+- PMC 逐篇许可：解析 license/license_url/copyright，写入 Article，报告与 CSV 展示；真实取到 CC BY 4.0
 - 测试 93 passed, 1 skipped；真实冒烟 1 篇 14 条证据全部通过

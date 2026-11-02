@@ -21,6 +21,9 @@ ARTICLE_FIELDS = [
     "source",
     "retrieved_at",
     "missing_fields",
+    "license",
+    "license_url",
+    "copyright",
     "abstract",
 ]
 
@@ -89,6 +92,9 @@ def article_row(article: Article) -> dict[str, object]:
         "source": article.source,
         "retrieved_at": article.retrieved_at.isoformat(),
         "missing_fields": _join(article.missing_fields, ","),
+        "license": article.license or "",
+        "license_url": article.license_url or "",
+        "copyright": article.copyright or "",
         "abstract": article.abstract,
     }
 

@@ -190,7 +190,7 @@ def build_markdown(
         lines.append(
             f"- {year} · {journal} · {PUBLICATION_TYPE_LABELS.get(article.publication_type, '其他')} · "
             f"[{article.title}]({link}) · 全文：{FULLTEXT_LABELS[article.fulltext_status]} · "
-            f"缺失字段：{missing}"
+            f"许可：{article.license or '未提供'} · 缺失字段：{missing}"
         )
     lines += [
         "",

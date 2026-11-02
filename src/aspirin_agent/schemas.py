@@ -105,6 +105,9 @@ class Article(BaseModel):
     retrieved_at: datetime = Field(default_factory=_now)
     fulltext_status: FullTextStatus = FullTextStatus.NOT_FETCHED
     fulltext: str | None = None
+    license: str | None = None
+    license_url: str | None = None
+    copyright: str | None = None
 
     @field_validator("pmid")
     @classmethod

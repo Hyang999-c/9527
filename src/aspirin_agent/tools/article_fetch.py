@@ -5,7 +5,7 @@ from __future__ import annotations
 import httpx
 
 from ..errors import PubMedError
-from ..parsers.fulltext import parse_pmc_xml
+from ..parsers.fulltext import parse_pmc_permissions, parse_pmc_xml
 from ..schemas import Article, FullTextStatus
 from ..utils.logging_utils import get_logger
 from ..utils.retry import http_retry
@@ -71,10 +71,12 @@ def fetch_fulltext(
             return article.model_copy(
                 update={"fulltext_status": FullTextStatus.FULLTEXT_UNAVAILABLE}
             )
+        permissions = parse_pmc_permissions(xml_text)
         return article.model_copy(
             update={
                 "fulltext": text[:MAX_FULLTEXT_CHARS],
                 "fulltext_status": FullTextStatus.FULLTEXT_AVAILABLE,
+                **permissions,
             }
         )
     except (httpx.HTTPError, PubMedError) as exc:

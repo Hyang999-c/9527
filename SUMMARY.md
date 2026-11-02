@@ -14,11 +14,11 @@
 | 环节 | 能力 | 主要文件 |
 | --- | --- | --- |
 | 检索 | ESearch/EFetch、ELink 相关扩展、参考文献/被引追溯、3/10 次每秒限速、超时、重试、分批、原始响应落盘 | src/aspirin_agent/tools/pubmed_search.py |
-| 解析 | PubMed XML、PMC JATS/HTML 全文、出版类型映射、研究模型字段 | parsers/pubmed_xml.py、parsers/fulltext.py |
+| 解析 | PubMed XML、PMC JATS/HTML 全文、PMC 许可元数据、出版类型映射、研究模型字段 | parsers/pubmed_xml.py、parsers/fulltext.py |
 | 去重 | PMID、DOI、标题相似度（0.92） | tools/deduplication.py |
 | 抽取 | v6 提示词、JSON 模式、截断自动重试、Pydantic 校验、综述降级、来源位置修正、陈述类型 | tools/evidence_extract.py、prompts/extract_evidence_v6.md |
 | 核查 | 引句逐字定位、标题/可访问性、在线 esummary/Crossref（开关）、语义 judge（开关）、状态机 | tools/citation_verify.py |
-| 成稿 | Markdown 报告、三张 CSV（UTF-8-SIG）、原始/处理后 JSON | tools/report_builder.py、tools/csv_export.py |
+| 成稿 | Markdown 报告、三张 CSV（含许可列）、原始/处理后 JSON | tools/report_builder.py、tools/csv_export.py |
 | 调度 | 依赖可注入、失败隔离、产物落盘、提示词可配置 | orchestrator.py |
 | CLI | aspirin-agent 命令、参数化检索式、--no-llm | main.py |
 
@@ -90,7 +90,7 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 - **召回 100%、精度 98%**：v6 用引句完整性约束换回精度；剩 3 条失败（2 条队列标签、1 条缺时间窗）
 - **冗余 1%**：161 条中仅 1 条近似重复（判重带数字守卫，避免把不同剂量误判为重复）
 - 评测只有 12 篇、161 条，且主要是 auto-strict 判定
-- PMC 全文许可声明已加，逐篇署名未处理
+- PMC 许可已逐篇提取并展示（CC BY 等），未做许可兼容性校验
 - 引文追溯依赖 PMC 链接，覆盖不全；未做递归多轮
 - 没有配置 git 远端
 
