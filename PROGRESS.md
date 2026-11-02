@@ -181,4 +181,5 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 - ESearch 按 `page_size` 自动翻页（retstart）
 - 报告页脚增加 PMC 开放获取与转载许可提示
 - 多轮检索：ELink related articles + 参考文献/被引追溯，seeds/max_refs/max_cited 可配，--no-expand 关闭；真实冒烟各扩到 4 篇
+- 冗余评测：161 条中近似重复 1 条（1%），判重带数字守卫
 - 测试 93 passed, 1 skipped；真实冒烟 1 篇 14 条证据全部通过

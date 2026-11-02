@@ -29,11 +29,20 @@ gold set 现有 12 篇：v6 精度 158/161（98%），召回 18/18（100%），�
 ## 召回评测
 
 ~~~powershell
-..venvScriptspython.exe scriptsecall_eval.py evaluns<run_id>
+.\.venv\Scripts\python.exe scripts\recall_eval.py eval\runs\<run_id>
 ~~~
 
 用 eval/recall_gold.yaml 里人工编写的关键结论，逐条判断抽出的证据是否覆盖；
 输出 recall.md / recall.json，未覆盖项会列出原因。方法类金标（kind: method）不计入召回。
+
+## 冗余评测
+
+~~~powershell
+.\.venv\Scripts\python.exe scripts\redundancy_eval.py eval\runs\<run_id>
+~~~
+
+按同一文献内 claim 相似度聚类；数字不同的条目不判重复（如 81mg 97% vs 325mg 96%）。
+输出 redundancy.md / redundancy.json。
 
 ## 注意
 
