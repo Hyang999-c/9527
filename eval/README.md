@@ -1,7 +1,7 @@
 # 评测说明
 
-当前最佳提示词：prompts/extract_evidence_v3.md（一条证据只对应一个结果）。
-gold set 现有 12 篇，auto-strict 134/135（99%），人工抽查 10/10 一致。
+当前最佳提示词：prompts/extract_evidence_v4.md（v3 + 作者解释/适用性/绝对风险）。
+gold set 现有 12 篇：v4 精度 179/185（97%），召回 17/18（94%）。
 
 目的：用一批人工可核对的真实文献，衡量“抽取出的 claim 是否被 quote 支持”，而不是只看程序是否跑通。
 
