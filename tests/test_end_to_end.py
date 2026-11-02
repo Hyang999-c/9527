@@ -127,6 +127,31 @@ def test_pipeline_without_llm_still_reports(tmp_path) -> None:
     assert "本轮未抽取到证据" in result.report.markdown
 
 
+def test_related_expansion_adds_articles(tmp_path) -> None:
+    class ExpandingSearcher(FakeSearcher):
+        def expand_related(self, pmids: list[str], max_results: int = 10) -> list[Article]:
+            assert pmids == ["1"]
+            return [Article(pmid="99", title="Related aspirin study", abstract="related")]
+
+    orchestrator = Orchestrator(
+        {
+            "search": {
+                "max_results_per_query": 3,
+                "expand": {"enabled": True, "seeds": 1, "max_related": 5},
+            }
+        },
+        llm=FakeLLM(),
+        searcher=ExpandingSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    result = orchestrator.run("扩展测试")
+
+    assert [article.pmid for article in result.articles] == ["1", "99"]
+    assert result.stats["related_fetched"] == 1
+    assert result.stats["duplicates_removed"] == 0
+
+
 def test_extraction_failure_is_reported(tmp_path) -> None:
     class FailingLLM:
         def complete(self, messages: list[dict], **kwargs) -> str:

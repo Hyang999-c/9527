@@ -196,6 +196,39 @@ class PubMedSearcher:
         self._save_raw("pmc_efetch", response.text, "xml")
         return response.text
 
+    def elink_related(self, pmids: list[str], max_results: int = 10) -> list[str]:
+        """ELink neighbor：取与种子文献相关的 PMID，排除种子本身。"""
+        if not pmids:
+            return []
+        params = {
+            **self.common_params(),
+            "dbfrom": "pubmed",
+            "db": "pubmed",
+            "id": ",".join(str(pmid) for pmid in pmids),
+            "cmd": "neighbor",
+            "retmode": "json",
+        }
+        response = self._get("elink.fcgi", params)
+        self._save_raw("pubmed_elink", response.text, "json")
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise PubMedError("ELink 返回的不是合法 JSON") from exc
+
+        links: list[str] = []
+        for linkset in payload.get("linksets", []):
+            for db in linkset.get("linksetdbs", []):
+                if db.get("dbto") == "pubmed" or str(db.get("linkname", "")).startswith("pubmed"):
+                    links.extend(str(item) for item in db.get("links", []))
+
+        seeds = {str(pmid) for pmid in pmids}
+        unique = [pmid for pmid in dict.fromkeys(links) if pmid not in seeds]
+        return unique[:max_results]
+
+    def expand_related(self, pmids: list[str], max_results: int = 10) -> list[Article]:
+        related = self.elink_related(pmids, max_results)
+        return self.fetch_by_pmids(related) if related else []
+
     def fetch_by_pmids(self, pmids: list[str]) -> list[Article]:
         """按 PMID 分批取回，去重保序；解析失败抛 PubMedError。"""
         unique = list(dict.fromkeys(str(pmid) for pmid in pmids))

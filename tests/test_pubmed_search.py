@@ -256,6 +256,28 @@ def test_search_pubmed_tool_wrapper() -> None:
     assert records[0].pmid == "1"
 
 
+def test_elink_related_excludes_seeds_and_limits() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("elink.fcgi")
+        return httpx.Response(
+            200,
+            json={
+                "linksets": [
+                    {
+                        "ids": ["1"],
+                        "linksetdbs": [
+                            {"linkname": "pubmed_pubmed", "dbto": "pubmed", "links": ["1", "2", "3"]}
+                        ],
+                    }
+                ]
+            },
+        )
+
+    searcher = make_searcher(handler)
+    assert searcher.elink_related(["1"]) == ["2", "3"]
+    assert searcher.elink_related(["1"], max_results=1) == ["2"]
+
+
 def test_esearch_paginates_with_retstart() -> None:
     starts: list[int] = []
 

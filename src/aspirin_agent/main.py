@@ -42,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--queries-file", default="config/search_queries.yaml")
     parser.add_argument("--max-queries", type=int, default=6)
     parser.add_argument("--no-llm", action="store_true", help="只检索，不调用大模型")
+    parser.add_argument("--no-expand", action="store_true", help="关闭相关文献扩展")
     parser.add_argument("--log-level", default="INFO")
     return parser
 
@@ -65,6 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         pass
 
     settings = load_settings(args.config)
+    if args.no_expand:
+        settings.setdefault("search", {}).setdefault("expand", {})["enabled"] = False
     queries = args.query or load_queries(args.queries_file)[: args.max_queries] or [args.question]
     llm = None if args.no_llm else LLMClient.from_settings(settings)
 

@@ -61,7 +61,26 @@ class Orchestrator:
                 logger.error("检索失败 %r: %s", term, exc)
 
         unique = deduplicate_records(found)
+        duplicates_removed = len(found) - len(unique)
         logger.info("检索 %d 篇，去重后 %d 篇", len(found), len(unique))
+
+        related_count = 0
+        expand_config = self.settings.get("search", {}).get("expand", {})
+        if expand_config.get("enabled") and unique:
+            expand_fn = getattr(self.searcher, "expand_related", None)
+            if expand_fn is not None:
+                seeds = [
+                    article.pmid
+                    for article in unique[: int(expand_config.get("seeds", 3))]
+                ]
+                try:
+                    extra = expand_fn(seeds, int(expand_config.get("max_related", 10)))
+                    before = len(unique)
+                    unique = deduplicate_records(unique + extra)
+                    related_count = len(unique) - before
+                    logger.info("相关文献扩展：新增 %d 篇", related_count)
+                except Exception as exc:  # noqa: BLE001 - 扩展失败不阻断主流程
+                    logger.warning("相关文献扩展失败: %s", exc)
 
         if self._fetch_enabled():
             limit = self.settings.get("fetch", {}).get("max_articles")
@@ -132,7 +151,8 @@ class Orchestrator:
             stats={
                 "articles_found": len(found),
                 "articles_unique": len(unique),
-                "duplicates_removed": len(found) - len(unique),
+                "duplicates_removed": duplicates_removed,
+                "related_fetched": related_count,
                 "evidence_items": len(evidence),
                 "extraction_failures": len(batch.failures),
                 "low_confidence_filtered": len(filtered),

@@ -22,6 +22,11 @@ search:
   efetch_batch_size: 200
   # ESearch 单页条数；超过时按 retstart 自动翻页
   page_size: 200
+  # 第二轮：按 ELink related articles 扩展
+  expand:
+    enabled: true
+    seeds: 3
+    max_related: 10
   sort: relevance
   date_range:
     from: 2015
