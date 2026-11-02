@@ -92,7 +92,7 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 - 评测只有 12 篇、161 条，且主要是 auto-strict 判定
 - 许可分类是规则判断（CC BY/NC/ND），不是法律意见
 - 递归扩展无相关性阈值，可能引入噪声
-- 远端是本机 bare 仓库，未推 GitHub
+- GitHub origin 已接通（main 已推送），本机 bare 作为 local 备份
 
 ## 八、关键提交
 

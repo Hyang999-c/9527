@@ -68,6 +68,7 @@ tests/                         10 个文件，82 passed
 - **密钥不要提交**；.gitignore 已排除 .env
 - Git 2.56.0（PortableGit 官方版，D:\Apps\Git），已加入用户 PATH；自带 Git Bash（D:\Apps\Git\git-bash.exe）
 - 仓库已初始化（main 分支），已完成首次提交（baseline）；本仓库身份：周洋 <buiqnsnmqmsn67999@gmail.com>
+- GitHub origin：https://github.com/Hyang999-c/9527.git（main 已推送，凭据存 Windows 凭据管理器）；本机 bare 作为 local 备份
 - 当前会话的 PATH 不会自动刷新；新开终端可直接用 git，旧会话用完整路径 D:\Apps\Git\cmd\git.exe
 - GitHub 直连把 github.com 解析到 20.205.243.166（超时）；下载 release 资产时用 curl --resolve github.com:443:140.82.112.4 绕过
 
@@ -181,8 +182,8 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 - ESearch 按 `page_size` 自动翻页（retstart）
 - 报告页脚增加 PMC 开放获取与转载许可提示
 - 多轮检索：ELink related articles + 参考文献/被引追溯，rounds/max_total 支持递归，--no-expand 关闭；真实冒烟 2 轮新增 3 篇
-- git 远端：D:\Apps\大肥鱼\git-remotes\aspirin-research-agent.git（本机 bare，已 push main）
+- git 远端：origin = GitHub（main 已推送）；local = 本机 bare 备份。DNS 绕行 http.curloptResolve=github.com:443:140.82.112.4
 - 冗余评测：161 条中近似重复 1 条（1%），判重带数字守卫
 - PMC 逐篇许可：解析 license/license_url/copyright，写入 Article，报告与 CSV 展示；真实取到 CC BY 4.0
 - 许可兼容性：按 CC 链接分类（CC0/BY/SA/NC/NC-SA/NC-ND），报告与 CSV 标注可商用/可改作
-- 测试 93 passed, 1 skipped；真实冒烟 1 篇 14 条证据全部通过
+- 测试 100 passed, 1 skipped；真实冒烟 1 篇 14 条证据全部通过
