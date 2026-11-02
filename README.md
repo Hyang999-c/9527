@@ -68,7 +68,7 @@ aspirin-research-agent/
 
 ## 配置
 
-- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、ESearch 翻页、抽取批次、`min_confidence`、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v6），以及 `search.expand` 控制相关文献扩展与引文追溯，以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
+- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、ESearch 翻页、抽取批次、`min_confidence`、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v6），以及 `search.expand` 控制相关文献扩展、引文追溯与 `min_relevance` 阈值，以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
 - `config/search_queries.yaml`：按主题分组的检索式，`--max-queries` 控制本轮使用前 N 条
 - 密钥只放 `.env`，不进入版本库
 
@@ -125,4 +125,5 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 - [x] 多轮检索：ELink 相关扩展 + 参考文献/被引追溯，支持 rounds 递归（可关闭）
 - [x] 真实 API 联调、CSV 导出、语义核查 judge
 - [x] GitHub 远端（main 已推送，本机 bare 作备份）
-- [ ] 递归相关性过滤
+- [x] 递归相关性过滤（词面覆盖阈值）
+- [ ] 语义相关性判断

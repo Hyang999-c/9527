@@ -27,6 +27,8 @@ search:
     enabled: true
     rounds: 2
     max_total: 60
+    # 扩展文献的查询词覆盖率阈值；0 = 不过滤
+    min_relevance: 0.2
     seeds: 3
     max_related: 10
     citations: true

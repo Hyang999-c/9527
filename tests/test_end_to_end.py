@@ -222,6 +222,40 @@ def test_recursive_expansion_runs_multiple_rounds(tmp_path) -> None:
     assert result.stats["expansion_rounds"] == 2
 
 
+def test_irrelevant_expansion_is_filtered(tmp_path) -> None:
+    class IrrelevantSearcher(FakeSearcher):
+        def expand_related(self, pmids: list[str], max_results: int = 10) -> list[Article]:
+            return [
+                Article(
+                    pmid="777",
+                    title="Gardening for beginners",
+                    abstract="soil, plants and watering",
+                )
+            ]
+
+    orchestrator = Orchestrator(
+        {
+            "search": {
+                "max_results_per_query": 3,
+                "expand": {
+                    "enabled": True,
+                    "rounds": 1,
+                    "seeds": 1,
+                    "min_relevance": 0.5,
+                },
+            }
+        },
+        llm=FakeLLM(),
+        searcher=IrrelevantSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    result = orchestrator.run("aspirin platelet inhibition")
+
+    assert [article.pmid for article in result.articles] == ["1"]
+    assert result.stats["irrelevant_filtered"] == 1
+
+
 def test_extraction_failure_is_reported(tmp_path) -> None:
     class FailingLLM:
         def complete(self, messages: list[dict], **kwargs) -> str:

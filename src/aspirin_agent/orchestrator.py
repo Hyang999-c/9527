@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .relevance import relevance_score
 from .schemas import ExtractionBatch, PipelineResult
 from .tools.article_fetch import enrich_articles
 from .tools.citation_verify import LLMJudge, PubMedResolver, verify_citations
@@ -65,9 +66,13 @@ class Orchestrator:
         logger.info("检索 %d 篇，去重后 %d 篇", len(found), len(unique))
 
         expand_config = self.settings.get("search", {}).get("expand", {})
-        unique, related_count, citation_count, rounds_done = self._expand_articles(
-            unique, expand_config
-        )
+        (
+            unique,
+            related_count,
+            citation_count,
+            rounds_done,
+            irrelevant_count,
+        ) = self._expand_articles(unique, expand_config, terms)
 
         if self._fetch_enabled():
             limit = self.settings.get("fetch", {}).get("max_articles")
@@ -142,6 +147,7 @@ class Orchestrator:
                 "related_fetched": related_count,
                 "citation_fetched": citation_count,
                 "expansion_rounds": rounds_done,
+                "irrelevant_filtered": irrelevant_count,
                 "evidence_items": len(evidence),
                 "extraction_failures": len(batch.failures),
                 "low_confidence_filtered": len(filtered),
@@ -155,25 +161,35 @@ class Orchestrator:
         return result
 
     def _expand_articles(
-        self, articles: list, config: dict
-    ) -> tuple[list, int, int, int]:
-        """按 rounds 递归扩展相关文献与引文；返回 (文章, 相关数, 引文数, 轮数)。"""
+        self, articles: list, config: dict, terms: list[str]
+    ) -> tuple[list, int, int, int, int]:
+        """递归扩展；返回 (文章, 相关数, 引文数, 轮数, 相关性过滤数)。"""
         if not articles or not (config.get("enabled") or config.get("citations")):
-            return articles, 0, 0, 0
+            return articles, 0, 0, 0, 0
 
         related_fn = getattr(self.searcher, "expand_related", None)
         citation_fn = getattr(self.searcher, "expand_citations", None)
         if related_fn is None and citation_fn is None:
-            return articles, 0, 0, 0
+            return articles, 0, 0, 0, 0
 
         rounds = max(1, int(config.get("rounds", 1)))
         seed_limit = max(1, int(config.get("seeds", 3)))
         max_total = max(1, int(config.get("max_total", 60)))
+        min_relevance = max(0.0, float(config.get("min_relevance", 0.0)))
 
         seen = {article.pmid for article in articles}
         expanded: set[str] = set()
         frontier = list(articles)
-        related_total = citation_total = rounds_done = 0
+        related_total = citation_total = rounds_done = irrelevant_total = 0
+
+        def accepts(article) -> bool:
+            nonlocal irrelevant_total
+            if min_relevance <= 0:
+                return True
+            if relevance_score(article, terms) >= min_relevance:
+                return True
+            irrelevant_total += 1
+            return False
 
         for _ in range(rounds):
             seeds = [
@@ -190,8 +206,10 @@ class Orchestrator:
             if related_fn is not None and config.get("enabled"):
                 try:
                     for article in related_fn(seeds, int(config.get("max_related", 10))):
-                        if article.pmid not in seen:
-                            seen.add(article.pmid)
+                        if article.pmid in seen:
+                            continue
+                        seen.add(article.pmid)
+                        if accepts(article):
                             new_related.append(article)
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("相关文献扩展失败: %s", exc)
@@ -204,8 +222,10 @@ class Orchestrator:
                         int(config.get("max_refs", 5)),
                         int(config.get("max_cited", 5)),
                     ):
-                        if article.pmid not in seen:
-                            seen.add(article.pmid)
+                        if article.pmid in seen:
+                            continue
+                        seen.add(article.pmid)
+                        if accepts(article):
                             new_cited.append(article)
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("引文追溯失败: %s", exc)
@@ -224,12 +244,19 @@ class Orchestrator:
                 break
 
         logger.info(
-            "扩展 %d 轮：相关 %d 篇、引文 %d 篇",
+            "扩展 %d 轮：相关 %d 篇、引文 %d 篇、相关性过滤 %d 篇",
             rounds_done,
             related_total,
             citation_total,
+            irrelevant_total,
         )
-        return articles[:max_total], related_total, citation_total, rounds_done
+        return (
+            articles[:max_total],
+            related_total,
+            citation_total,
+            rounds_done,
+            irrelevant_total,
+        )
 
     def _persist(self, result: PipelineResult) -> None:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
