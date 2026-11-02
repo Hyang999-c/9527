@@ -92,7 +92,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（按优先级）
 
-1. **评测仍以小样本为主**：v5 12 篇 177 条，169/177（95%），召回 18/18；精度下降主要来自引句不完整/超额推断。
+1. **评测仍以小样本为主**：v6 12 篇 161 条，158/161（98%），召回 18/18；剩余 3 条失败中 2 条是队列标签、1 条缺时间窗。
 2. **min_confidence 未使用**：低置信度证据不筛。
 3. 单页检索：没有翻页，retmax 上限 1 万。
 4. 抽取失败清单只进 JSON/CSV，不进报告正文。
@@ -110,7 +110,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. ✅ 在线核查开关 + 语义 judge（已完成；真实跑 1 篇，online=True、claim=True）
 4. **收尾项**：min_confidence 过滤、失败清单进报告、检索分页
-5. **评测**：v3 99%/83% → v4 97%/94% → v5 95%/100%（precision/recall）；v5 已设为默认
+5. **评测**：v3 99%/83% → v4 97%/94% → v5 95%/100% → v6 98%/100%；v6 已设为默认
 
 ## 八、上次验证命令与结果（可复现）
 
