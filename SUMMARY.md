@@ -56,7 +56,7 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 | 支持率（precision 近似） | 158/161（98%） |
 | quote 逐字率 | 161/161（100%） |
 | 召回（4 篇 18 条） | 18/18（100%） |
-| 人工抽查 | v3 批次 10/10 一致 |
+| 人工抽查 | v6 批次 10/10 一致（含 1 条失败） |
 
 分层：human_rct 42/45、meta_analysis 49/49、review 30/30、human_primary 10/10、preclinical 27/27。
 
