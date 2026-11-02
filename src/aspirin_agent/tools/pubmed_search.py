@@ -196,8 +196,10 @@ class PubMedSearcher:
         self._save_raw("pmc_efetch", response.text, "xml")
         return response.text
 
-    def elink_related(self, pmids: list[str], max_results: int = 10) -> list[str]:
-        """ELink neighbor：取与种子文献相关的 PMID，排除种子本身。"""
+    def elink(
+        self, pmids: list[str], linkname: str, max_results: int = 10
+    ) -> list[str]:
+        """ELink 通用入口：按 linkname 取关联 PMID，排除种子本身。"""
         if not pmids:
             return []
         params = {
@@ -206,10 +208,11 @@ class PubMedSearcher:
             "db": "pubmed",
             "id": ",".join(str(pmid) for pmid in pmids),
             "cmd": "neighbor",
+            "linkname": linkname,
             "retmode": "json",
         }
         response = self._get("elink.fcgi", params)
-        self._save_raw("pubmed_elink", response.text, "json")
+        self._save_raw(f"pubmed_elink_{linkname}", response.text, "json")
         try:
             payload = response.json()
         except ValueError as exc:
@@ -218,16 +221,29 @@ class PubMedSearcher:
         links: list[str] = []
         for linkset in payload.get("linksets", []):
             for db in linkset.get("linksetdbs", []):
-                if db.get("dbto") == "pubmed" or str(db.get("linkname", "")).startswith("pubmed"):
+                name = str(db.get("linkname", ""))
+                if name == linkname or (not name and db.get("dbto") == "pubmed"):
                     links.extend(str(item) for item in db.get("links", []))
 
         seeds = {str(pmid) for pmid in pmids}
         unique = [pmid for pmid in dict.fromkeys(links) if pmid not in seeds]
         return unique[:max_results]
 
+    def elink_related(self, pmids: list[str], max_results: int = 10) -> list[str]:
+        return self.elink(pmids, "pubmed_pubmed", max_results)
+
     def expand_related(self, pmids: list[str], max_results: int = 10) -> list[Article]:
         related = self.elink_related(pmids, max_results)
         return self.fetch_by_pmids(related) if related else []
+
+    def expand_citations(
+        self, pmids: list[str], max_refs: int = 5, max_cited: int = 5
+    ) -> list[Article]:
+        """引文追溯：参考文献 + 被引文献，合并去重后取回。"""
+        refs = self.elink(pmids, "pubmed_pubmed_refs", max_refs)
+        cited = self.elink(pmids, "pubmed_pubmed_citedin", max_cited)
+        combined = list(dict.fromkeys(refs + cited))
+        return self.fetch_by_pmids(combined) if combined else []
 
     def fetch_by_pmids(self, pmids: list[str]) -> list[Article]:
         """按 PMID 分批取回，去重保序；解析失败抛 PubMedError。"""

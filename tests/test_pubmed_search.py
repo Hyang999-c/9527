@@ -278,6 +278,28 @@ def test_elink_related_excludes_seeds_and_limits() -> None:
     assert searcher.elink_related(["1"], max_results=1) == ["2"]
 
 
+def test_elink_filters_by_linkname() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["linkname"] == "pubmed_pubmed_refs"
+        return httpx.Response(
+            200,
+            json={
+                "linksets": [
+                    {
+                        "ids": ["1"],
+                        "linksetdbs": [
+                            {"linkname": "pubmed_pubmed_refs", "dbto": "pubmed", "links": ["10", "11"]},
+                            {"linkname": "pubmed_pubmed", "dbto": "pubmed", "links": ["12"]},
+                        ],
+                    }
+                ]
+            },
+        )
+
+    searcher = make_searcher(handler)
+    assert searcher.elink(["1"], "pubmed_pubmed_refs") == ["10", "11"]
+
+
 def test_esearch_paginates_with_retstart() -> None:
     starts: list[int] = []
 

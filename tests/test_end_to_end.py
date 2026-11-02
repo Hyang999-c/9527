@@ -152,6 +152,32 @@ def test_related_expansion_adds_articles(tmp_path) -> None:
     assert result.stats["duplicates_removed"] == 0
 
 
+def test_citation_chasing_adds_articles(tmp_path) -> None:
+    class CitationSearcher(FakeSearcher):
+        def expand_citations(
+            self, pmids: list[str], max_refs: int = 5, max_cited: int = 5
+        ) -> list[Article]:
+            assert pmids == ["1"]
+            return [Article(pmid="88", title="Cited aspirin study", abstract="cited")]
+
+    orchestrator = Orchestrator(
+        {
+            "search": {
+                "max_results_per_query": 3,
+                "expand": {"enabled": False, "citations": True, "seeds": 1},
+            }
+        },
+        llm=FakeLLM(),
+        searcher=CitationSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    result = orchestrator.run("引文追溯测试")
+
+    assert [article.pmid for article in result.articles] == ["1", "88"]
+    assert result.stats["citation_fetched"] == 1
+
+
 def test_extraction_failure_is_reported(tmp_path) -> None:
     class FailingLLM:
         def complete(self, messages: list[dict], **kwargs) -> str:

@@ -27,6 +27,9 @@ search:
     enabled: true
     seeds: 3
     max_related: 10
+    citations: true
+    max_refs: 5
+    max_cited: 5
   sort: relevance
   date_range:
     from: 2015

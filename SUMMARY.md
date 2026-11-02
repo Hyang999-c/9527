@@ -7,13 +7,13 @@
 ## 一、一句话
 
 一个可运行的文献证据流水线：**检索 → 去重 → 全文 → 结构化抽取 → 引用核查 → 报告/CSV/JSON**，
-并且有真实 API 运行记录、可复现的评测集与 91 条测试。
+并且有真实 API 运行记录、可复现的评测集与 93 条测试。
 
 ## 二、已交付功能
 
 | 环节 | 能力 | 主要文件 |
 | --- | --- | --- |
-| 检索 | ESearch/EFetch、ELink 相关文献扩展、3/10 次每秒限速、超时、指数退避重试、EFetch 分批、原始响应落盘 | src/aspirin_agent/tools/pubmed_search.py |
+| 检索 | ESearch/EFetch、ELink 相关扩展、参考文献/被引追溯、3/10 次每秒限速、超时、重试、分批、原始响应落盘 | src/aspirin_agent/tools/pubmed_search.py |
 | 解析 | PubMed XML、PMC JATS/HTML 全文、出版类型映射、研究模型字段 | parsers/pubmed_xml.py、parsers/fulltext.py |
 | 去重 | PMID、DOI、标题相似度（0.92） | tools/deduplication.py |
 | 抽取 | v6 提示词、JSON 模式、截断自动重试、Pydantic 校验、综述降级、来源位置修正、陈述类型 | tools/evidence_extract.py、prompts/extract_evidence_v6.md |
@@ -91,7 +91,7 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 - **冗余未量化**：v6 拆条会产生碎片化，161 条里可能有重复结论
 - 评测只有 12 篇、161 条，且主要是 auto-strict 判定
 - PMC 全文许可声明已加，逐篇署名未处理
-- 多轮扩展只做 ELink neighbor，未做参考文献/被引追溯
+- 引文追溯依赖 PMC 链接，覆盖不全；未做递归多轮
 - 没有配置 git 远端
 
 ## 八、关键提交

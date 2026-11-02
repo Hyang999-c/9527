@@ -8,7 +8,7 @@
 
 ## 流水线
 
-1. **检索**：NCBI E-utilities（ESearch + EFetch），ELink 相关文献扩展（`--no-expand` 关闭），检索式见 `config/search_queries.yaml`
+1. **检索**：NCBI E-utilities（ESearch + EFetch），ELink 相关文献扩展与参考文献/被引追溯（`--no-expand` 关闭），检索式见 `config/search_queries.yaml`
 2. **去重**：PMID / DOI / 标题相似度（阈值 0.92）
 3. **全文补全**：有 PMCID 的文献抓取 PMC OA XML，失败则保留摘要
 4. **证据抽取**：LLM 按 `prompts/extract_evidence.md` 输出 JSON 证据条目（claim + 原文引句）
@@ -68,7 +68,7 @@ aspirin-research-agent/
 
 ## 配置
 
-- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、ESearch 翻页、抽取批次、`min_confidence`、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v6），以及 `search.expand` 控制第二轮相关文献扩展，以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
+- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、ESearch 翻页、抽取批次、`min_confidence`、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v6），以及 `search.expand` 控制相关文献扩展与引文追溯，以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
 - `config/search_queries.yaml`：按主题分组的检索式，`--max-queries` 控制本轮使用前 N 条
 - 密钥只放 `.env`，不进入版本库
 
@@ -122,6 +122,6 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 - [x] 第三步：LLM 客户端（超时/重试/JSON 模式回退）与结构化抽取、科学规则校验；已用真实 deepseek-chat 跑通 2 篇
 - [x] 第四步：引文定位、标识符/标题/可访问性核查、在线 esummary/Crossref 校验与语义 judge 均已接线（开关默认关）
 - [x] 第五步：调度、Markdown/CSV/JSON、低置信度过滤、失败清单、检索翻页、PMC 许可声明
-- [x] 多轮检索：ELink 相关文献扩展（可关闭）
+- [x] 多轮检索：ELink 相关扩展 + 参考文献/被引追溯（可关闭）
 - [x] 真实 API 联调、CSV 导出、语义核查 judge
 - [ ] per-article PMC 许可、冗余量化

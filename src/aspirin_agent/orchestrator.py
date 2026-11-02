@@ -82,6 +82,27 @@ class Orchestrator:
                 except Exception as exc:  # noqa: BLE001 - 扩展失败不阻断主流程
                     logger.warning("相关文献扩展失败: %s", exc)
 
+        citation_count = 0
+        if expand_config.get("citations") and unique:
+            citation_fn = getattr(self.searcher, "expand_citations", None)
+            if citation_fn is not None:
+                seeds = [
+                    article.pmid
+                    for article in unique[: int(expand_config.get("seeds", 3))]
+                ]
+                try:
+                    extra = citation_fn(
+                        seeds,
+                        int(expand_config.get("max_refs", 5)),
+                        int(expand_config.get("max_cited", 5)),
+                    )
+                    before = len(unique)
+                    unique = deduplicate_records(unique + extra)
+                    citation_count = len(unique) - before
+                    logger.info("引文追溯：新增 %d 篇", citation_count)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("引文追溯失败: %s", exc)
+
         if self._fetch_enabled():
             limit = self.settings.get("fetch", {}).get("max_articles")
             unique = enrich_articles(unique, limit=limit, searcher=self.searcher)
@@ -153,6 +174,7 @@ class Orchestrator:
                 "articles_unique": len(unique),
                 "duplicates_removed": duplicates_removed,
                 "related_fetched": related_count,
+                "citation_fetched": citation_count,
                 "evidence_items": len(evidence),
                 "extraction_failures": len(batch.failures),
                 "low_confidence_filtered": len(filtered),
