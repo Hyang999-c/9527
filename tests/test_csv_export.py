@@ -97,6 +97,8 @@ def test_row_values_are_flat(tmp_path) -> None:
     assert article_row["publication_type"] == "rct"
     assert article_row["license"] == "CC BY 4.0"
     assert article_row["license_url"].endswith("by/4.0/")
+    assert article_row["license_class"] == "cc_by"
+    assert article_row["license_commercial"] == "true"
 
     evidence_row = read_rows(paths["evidence"])[0]
     assert evidence_row["statement_type"] == "fact"

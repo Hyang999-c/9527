@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from ..licensing import classify_license
 from ..schemas import Article, Evidence, Verification
 
 ARTICLE_FIELDS = [
@@ -23,6 +24,9 @@ ARTICLE_FIELDS = [
     "missing_fields",
     "license",
     "license_url",
+    "license_class",
+    "license_commercial",
+    "license_derivatives",
     "copyright",
     "abstract",
 ]
@@ -78,6 +82,7 @@ def _write(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None
 
 
 def article_row(article: Article) -> dict[str, object]:
+    info = classify_license(article.license, article.license_url)
     return {
         "pmid": article.pmid,
         "doi": article.doi or "",
@@ -94,6 +99,9 @@ def article_row(article: Article) -> dict[str, object]:
         "missing_fields": _join(article.missing_fields, ","),
         "license": article.license or "",
         "license_url": article.license_url or "",
+        "license_class": info.license_class.value,
+        "license_commercial": _bool(info.commercial_ok),
+        "license_derivatives": _bool(info.derivatives_ok),
         "copyright": article.copyright or "",
         "abstract": article.abstract,
     }

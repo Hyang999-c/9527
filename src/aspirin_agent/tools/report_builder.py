@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from ..licensing import classify_license, license_label
 from ..schemas import (
     Article,
     Evidence,
@@ -187,10 +188,11 @@ def build_markdown(
             f"https://pubmed.ncbi.nlm.nih.gov/{article.pmid}/" if article.pmid else "#"
         )
         missing = "、".join(article.missing_fields) or "无"
+        permission = classify_license(article.license, article.license_url)
         lines.append(
             f"- {year} · {journal} · {PUBLICATION_TYPE_LABELS.get(article.publication_type, '其他')} · "
             f"[{article.title}]({link}) · 全文：{FULLTEXT_LABELS[article.fulltext_status]} · "
-            f"许可：{article.license or '未提供'} · 缺失字段：{missing}"
+            f"许可：{license_label(permission)} · 缺失字段：{missing}"
         )
     lines += [
         "",

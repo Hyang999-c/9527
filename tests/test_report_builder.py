@@ -55,6 +55,8 @@ def test_report_contains_traceable_sections() -> None:
     assert "https://pubmed.ncbi.nlm.nih.gov/1/" in markdown
     assert "陈述类型：作者解释" in markdown
     assert "部分通过" in markdown
+    assert "许可：UNKNOWN" in markdown
+    assert "人工核对" in markdown
     assert "仅摘要" in markdown
     assert "未报告" in markdown
     assert "校验提示：测试提示：来源仅摘要" in markdown
