@@ -105,7 +105,7 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 
 说明见 [eval/README.md](eval/README.md)；gold set 在 [eval/gold_set.yaml](eval/gold_set.yaml)。
 
-当前结果：v3 在 12 篇上 134/135（99%）、召回 15/18（83%）；v4 179/185（97%）、召回 17/18（94%），已设为默认。
+当前结果：v3 99%/83%、v4 97%/94%、v5 95%/100%（precision / recall）；v5 已设为默认。
 
 ### 召回评测
 
@@ -113,7 +113,7 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 ..venvScriptspython.exe scriptsecall_eval.py evaluns<run_id>
 ~~~
 
-4 篇 / 18 条关键结论：v3 15/18（83%）→ v4 **17/18（94%）**。
+4 篇 / 18 条关键结论：v3 83% → v4 94% → v5 **18/18（100%）**。
 
 ## 进度
 

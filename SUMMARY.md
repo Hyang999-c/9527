@@ -51,14 +51,14 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 
 | 指标 | 结果 |
 | --- | --- |
-| 证据数 | 185 |
+| 证据数 | 177 |
 | 抽取失败 | 0 |
-| 支持率（precision 近似） | 179/185（97%） |
-| quote 逐字率 | 185/185（100%） |
-| 召回（4 篇 18 条） | 17/18（94%） |
+| 支持率（precision 近似） | 169/177（95%） |
+| quote 逐字率 | 177/177（100%） |
+| 召回（4 篇 18 条） | 18/18（100%） |
 | 人工抽查 | v3 批次 10/10 一致 |
 
-分层：human_rct 38/39、meta_analysis 37/37、review 22/22、human_primary 11/11、preclinical 26/26。
+分层：human_rct 38/42、meta_analysis 57/59、review 30/32、human_primary 11/11、preclinical 33/33。
 
 提示词 A/B（同一批 5 篇）：
 
@@ -68,11 +68,12 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 | v2 | 44 | 95% | 12 |
 | v3（一条证据一个结果） | 59 | 97% | 14 |
 | v4（作者解释/绝对风险） | 185（12 篇） | 97% | — |
+| v5（比较性结论） | 177（12 篇） | 95% | — |
 
-召回评测（4 篇 / 18 条关键结论）：**17/18（94%）**；仍漏 R3 这种跨条目的比较结论。
+召回评测（4 篇 / 18 条关键结论）：**18/18（100%）**；v5 补上了比较性结论。
 
 评测工具：eval/gold_set.yaml、eval/recall_gold.yaml、scripts/build_eval.py、scripts/score_eval.py、scripts/auto_label_eval.py、scripts/recall_eval.py。
-最新结果：eval/runs/20261102T125757Z/score.md 与 recall.md。
+最新结果：eval/runs/20261102T131013Z/score.md 与 recall.md。
 
 ## 六、过程中修掉的真实缺陷
 
@@ -85,7 +86,7 @@ Gold set：12 篇，覆盖人体 RCT、人体原始研究、临床前、meta 分
 
 ## 七、边界与未完成
 
-- **召回 94%**：4 篇 18 条关键结论，仍漏 R3 这种跨条目比较结论
+- **召回 100%**：4 篇 18 条关键结论全中；代价是精度降到 95%，8 条引句不完整/超额推断
 - **冗余未量化**：v3 拆条会产生碎片化，135 条里可能有重复结论
 - 评测只有 12 篇、135 条，且主要是 auto-strict 判定
 - min_confidence 未用于过滤

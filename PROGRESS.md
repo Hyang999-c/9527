@@ -92,7 +92,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 
 ## 六、已知问题（按优先级）
 
-1. **评测仍以小样本为主**：v4 12 篇 185 条，179/185（97%），召回 17/18（94%）；仍缺 comparative 结论（R3）。
+1. **评测仍以小样本为主**：v5 12 篇 177 条，169/177（95%），召回 18/18；精度下降主要来自引句不完整/超额推断。
 2. **min_confidence 未使用**：低置信度证据不筛。
 3. 单页检索：没有翻页，retmax 上限 1 万。
 4. 抽取失败清单只进 JSON/CSV，不进报告正文。
@@ -110,7 +110,7 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. ✅ 在线核查开关 + 语义 judge（已完成；真实跑 1 篇，online=True、claim=True）
 4. **收尾项**：min_confidence 过滤、失败清单进报告、检索分页
-5. **评测**：v1 93% → v2 95% → v3 97%；v3 12 篇 99% / 召回 83%；v4 97% / 召回 94%，已设为默认
+5. **评测**：v3 99%/83% → v4 97%/94% → v5 95%/100%（precision/recall）；v5 已设为默认
 
 ## 八、上次验证命令与结果（可复现）
 
@@ -167,3 +167,4 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
   - G5：每 1000 人服用 10 年的绝对风险估计（1 例死亡 + 1 例致残性卒中）
 - 结论：抽取偏重“结果”，漏“作者解释 / 适用性声明 / 绝对风险”
 - 脚本：scripts/recall_eval.py；金标：eval/recall_gold.yaml
+\n\n### v5 迭代（2026-11-02）\n\n| 版本 | 证据数 | precision | recall |\n| --- | --- | --- | --- |\n| v3 | 135 | 99% | 83% |\n| v4 | 185 | 97% | 94% |\n| v5 | 177 | 95% | 100% |\n\n- v5 新增：明确比较句（similar/comparable/no significant difference）单独成条，quote 必须含比较双方\n- R3 补上；R3 金标同时去掉了 n=66/随机分组这类设计细节\n- 代价：精度 95%，8 条失败，主要是引句不完整（缺时间窗/终点/映射）或把作者暗示写成明示\n- v5 已设为默认（config: extraction.prompt = prompts/extract_evidence_v5.md）\n
