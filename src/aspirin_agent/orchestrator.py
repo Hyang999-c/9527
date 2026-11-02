@@ -92,7 +92,11 @@ class Orchestrator:
             if self.llm
             else ExtractionBatch()
         )
-        evidence = batch.evidence
+        threshold = float(extraction.get("min_confidence", 0.0))
+        filtered = [item for item in batch.evidence if item.confidence < threshold]
+        evidence = [item for item in batch.evidence if item.confidence >= threshold]
+        if filtered:
+            logger.info("低置信度未纳入 %d 条（阈值 %.2f）", len(filtered), threshold)
 
         verification_config = self.settings.get("verification", {})
         resolver = self.resolver
@@ -106,7 +110,15 @@ class Orchestrator:
             evidence, unique, resolver=resolver, judge=judge
         )
         title = self.settings.get("report", {}).get("title", DEFAULT_TITLE)
-        report = build_report(unique, evidence, verifications, question=question, title=title)
+        report = build_report(
+            unique,
+            evidence,
+            verifications,
+            question=question,
+            title=title,
+            extraction_failures=batch.failures,
+            low_confidence_filtered=len(filtered),
+        )
 
         result = PipelineResult(
             question=question,
@@ -115,6 +127,7 @@ class Orchestrator:
             evidence=evidence,
             verifications=verifications,
             extraction_failures=batch.failures,
+            filtered_low_confidence=filtered,
             report=report,
             stats={
                 "articles_found": len(found),
@@ -122,6 +135,7 @@ class Orchestrator:
                 "duplicates_removed": len(found) - len(unique),
                 "evidence_items": len(evidence),
                 "extraction_failures": len(batch.failures),
+                "low_confidence_filtered": len(filtered),
                 "verified_passed": sum(
                     1 for check in verifications if check.final_status.value == "passed"
                 ),
@@ -157,6 +171,10 @@ class Orchestrator:
                     "extraction_failures": [
                         failure.model_dump(mode="json")
                         for failure in result.extraction_failures
+                    ],
+                    "filtered_low_confidence": [
+                        item.model_dump(mode="json")
+                        for item in result.filtered_low_confidence
                     ],
                 },
                 ensure_ascii=False,

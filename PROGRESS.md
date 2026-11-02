@@ -93,13 +93,10 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 ## 六、已知问题（按优先级）
 
 1. **评测仍以小样本为主**：v6 12 篇 161 条，158/161（98%），召回 18/18，人工抽查 10/10；剩余 2 条 auto 失败未抽到。
-2. **min_confidence 未使用**：低置信度证据不筛。
-3. 单页检索：没有翻页，retmax 上限 1 万。
-4. 抽取失败清单只进 JSON/CSV，不进报告正文。
-5. PMC 全文许可/署名未处理；对外转载前需逐篇核对。
-6. utils/retry.py（tenacity）与 searcher 手写重试并存，可择一统一。
-7. 语义 judge 会增加模型调用成本，目前无缓存/批量优化。
-8. 在线核查每次重跑都会重复请求，未做本地缓存。
+2. PMC 全文许可声明已加，但逐篇许可/署名仍未处理。
+3. utils/retry.py（tenacity）与 searcher 手写重试并存，可择一统一。
+4. 语义 judge 会增加模型调用成本，目前无缓存/批量优化。
+5. 在线核查每次重跑都会重复请求，未做本地缓存。
 
 ## 七、明天从这里开始
 
@@ -109,14 +106,14 @@ $env:RUN_LIVE_TESTS='1'; .\.venv\Scripts\python.exe -m pytest tests\test_live_pu
 1. ✅ 补 statement_type（已完成；真实跑出作者解释条目，报告可见）
 2. ✅ CSV 导出（已完成；三张表带 run_id，UTF-8-SIG，真实跑批验证）
 3. ✅ 在线核查开关 + 语义 judge（已完成；真实跑 1 篇，online=True、claim=True）
-4. **收尾项**：min_confidence 过滤、失败清单进报告、检索分页
+4. ✅ min_confidence、失败清单、检索翻页、PMC 声明（已完成）
 5. **评测**：v3 99%/83% → v4 97%/94% → v5 95%/100% → v6 98%/100%；v6 已设为默认
 
 ## 八、上次验证命令与结果（可复现）
 
 ~~~text
 ruff check src tests scripts -> All checks passed!
-pytest                       -> 86 passed, 1 skipped
+pytest                       -> 89 passed, 1 skipped
 coverage                     -> 87%
 ~~~
 
@@ -175,3 +172,11 @@ v3 已设为默认（config: extraction.prompt = prompts/extract_evidence_v3.md�
 | v4 | 185 | 97% | 94% |
 | v5 | 177 | 95% | 100% |
 | v6 | 161 | 98% | 100% |
+
+## 十一、生产收尾（2026-11-02）
+
+- `min_confidence` 过滤：低于阈值不进入报告，但保留在 data/processed/*.json 的 filtered_low_confidence
+- 抽取失败清单进报告正文（新增“抽取失败”小节）
+- ESearch 按 `page_size` 自动翻页（retstart）
+- 报告页脚增加 PMC 开放获取与转载许可提示
+- 测试 89 passed, 1 skipped；真实冒烟 1 篇 14 条证据全部通过

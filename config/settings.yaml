@@ -20,6 +20,8 @@ search:
   retry_attempts: 3
   retry_backoff_seconds: 1.0
   efetch_batch_size: 200
+  # ESearch 单页条数；超过时按 retstart 自动翻页
+  page_size: 200
   sort: relevance
   date_range:
     from: 2015

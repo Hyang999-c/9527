@@ -68,7 +68,7 @@ aspirin-research-agent/
 
 ## 配置
 
-- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、抽取批次、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v3），以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
+- `config/settings.yaml`：检索条数、超时、重试、限速、EFetch 批大小、ESearch 翻页、抽取批次、`min_confidence`、模型参数、报告标题；`extraction.prompt` 指定抽取提示词（默认 v6），以及 `verification.online_check` / `semantic_judge` 两个核查开关（默认关）
 - `config/search_queries.yaml`：按主题分组的检索式，`--max-queries` 控制本轮使用前 N 条
 - 密钥只放 `.env`，不进入版本库
 
@@ -110,7 +110,7 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 ### 召回评测
 
 ~~~powershell
-..venvScriptspython.exe scriptsecall_eval.py evaluns<run_id>
+.\.venv\Scripts\python.exe scripts\recall_eval.py eval\runs\<run_id>
 ~~~
 
 4 篇 / 18 条关键结论：v3 83% → v4 94% → v5/v6 **18/18（100%）**。
@@ -121,6 +121,6 @@ RUN_LIVE_TESTS=1 pytest tests/test_live_pubmed.py   # 真打 PubMed，需要网�
 - [x] 第二步：PubMed 检索（限速/重试/超时/分批）、XML 解析、原始响应落盘、全文抓取、去重，均有离线测试与真实接口冒烟
 - [x] 第三步：LLM 客户端（超时/重试/JSON 模式回退）与结构化抽取、科学规则校验；已用真实 deepseek-chat 跑通 2 篇
 - [x] 第四步：引文定位、标识符/标题/可访问性核查、在线 esummary/Crossref 校验与语义 judge 均已接线（开关默认关）
-- [x] 第五步：调度、Markdown 报告、CSV/JSON 导出已实现；抽取失败清单待进报告
+- [x] 第五步：调度、Markdown/CSV/JSON、低置信度过滤、失败清单、检索翻页、PMC 许可声明
 - [x] 真实 API 联调、CSV 导出、语义核查 judge
-- [ ] 召回评测补强（当前 83%）、多轮检索、失败清单进报告
+- [ ] 多轮检索、per-article PMC 许可、冗余量化

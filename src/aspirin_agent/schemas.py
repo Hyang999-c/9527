@@ -249,6 +249,8 @@ class Report(BaseModel):
     summary: str = ""
     evidence: list[Evidence] = Field(default_factory=list)
     verifications: list[Verification] = Field(default_factory=list)
+    extraction_failures: list[ExtractionFailure] = Field(default_factory=list)
+    low_confidence_filtered: int = 0
     markdown: str = ""
 
 
@@ -259,5 +261,6 @@ class PipelineResult(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     verifications: list[Verification] = Field(default_factory=list)
     extraction_failures: list[ExtractionFailure] = Field(default_factory=list)
+    filtered_low_confidence: list[Evidence] = Field(default_factory=list)
     report: Report | None = None
     stats: dict[str, int] = Field(default_factory=dict)

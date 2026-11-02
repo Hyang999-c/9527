@@ -127,6 +127,53 @@ def test_pipeline_without_llm_still_reports(tmp_path) -> None:
     assert "本轮未抽取到证据" in result.report.markdown
 
 
+def test_extraction_failure_is_reported(tmp_path) -> None:
+    class FailingLLM:
+        def complete(self, messages: list[dict], **kwargs) -> str:
+            raise RuntimeError("model down")
+
+    orchestrator = Orchestrator(
+        {"search": {"max_results_per_query": 3}},
+        llm=FailingLLM(),
+        searcher=FakeSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    result = orchestrator.run("失败测试")
+
+    assert result.stats["extraction_failures"] == 1
+    assert result.report is not None
+    assert "抽取失败" in result.report.markdown
+    assert "model down" in result.report.markdown
+
+
+def test_low_confidence_is_filtered(tmp_path) -> None:
+    class LowConfidenceLLM(FakeLLM):
+        def complete(self, messages: list[dict], **kwargs) -> str:
+            return json.dumps(
+                {"evidence": [{"claim": "阿司匹林可能降低风险", "confidence": 0.2}]},
+                ensure_ascii=False,
+            )
+
+    orchestrator = Orchestrator(
+        {
+            "search": {"max_results_per_query": 3},
+            "extraction": {"min_confidence": 0.5},
+        },
+        llm=LowConfidenceLLM(),
+        searcher=FakeSearcher(build_articles()[:1]),
+        workdir=tmp_path,
+    )
+
+    result = orchestrator.run("低置信度测试")
+
+    assert result.evidence == []
+    assert result.stats["low_confidence_filtered"] == 1
+    assert result.filtered_low_confidence
+    assert result.report is not None
+    assert "低置信度未纳入 1 条" in result.report.markdown
+
+
 def test_custom_extraction_prompt_is_used(tmp_path) -> None:
     prompt_file = tmp_path / "custom_prompt.md"
     prompt_file.write_text("CUSTOM {{TITLE}}", encoding="utf-8")

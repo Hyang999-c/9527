@@ -254,3 +254,20 @@ def test_search_pubmed_tool_wrapper() -> None:
 
     assert len(records) == 1
     assert records[0].pmid == "1"
+
+
+def test_esearch_paginates_with_retstart() -> None:
+    starts: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        start = int(request.url.params.get("retstart", "0"))
+        starts.append(start)
+        if start == 0:
+            return httpx.Response(200, json={"esearchresult": {"idlist": ["1", "2"]}})
+        return httpx.Response(200, json={"esearchresult": {"idlist": ["3"]}})
+
+    searcher = make_searcher(handler, search={"page_size": 2})
+    ids = searcher.esearch_all("aspirin", 3)
+
+    assert ids == ["1", "2", "3"]
+    assert starts == [0, 2]

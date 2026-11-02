@@ -47,6 +47,7 @@ class PubMedSearcher:
         self.retries = max(1, int(config.get("retry_attempts", 3)))
         self.backoff = max(0.0, float(config.get("retry_backoff_seconds", 1.0)))
         self.batch_size = max(1, int(config.get("efetch_batch_size", 200)))
+        self.page_size = max(1, int(config.get("page_size", 200)))
         rate = config.get("rate_limit_per_second")
         rate_value = _auto_rate(self.api_key) if rate in (None, 0) else float(rate)
         self.limiter = limiter or RateLimiter(rate_value)
@@ -112,7 +113,9 @@ class PubMedSearcher:
             f"{endpoint} 请求失败（已重试 {self.retries} 次）: {last_error}"
         ) from last_error
 
-    def esearch(self, term: str, retmax: int | None = None) -> list[str]:
+    def esearch(
+        self, term: str, retmax: int | None = None, retstart: int = 0
+    ) -> list[str]:
         if not term.strip():
             raise ValueError("检索式不能为空")
         limit = self.max_results if retmax is None else retmax
@@ -125,6 +128,7 @@ class PubMedSearcher:
             "term": term,
             "retmode": "json",
             "retmax": limit,
+            "retstart": retstart,
             "sort": "relevance",
         }
         response = self._get("esearch.fcgi", params)
@@ -140,6 +144,24 @@ class PubMedSearcher:
         if result.get("ERROR"):
             raise PubMedError(f"ESearch 返回错误: {result['ERROR']}")
         return [str(pmid) for pmid in result.get("idlist", [])]
+
+    def esearch_all(self, term: str, max_results: int) -> list[str]:
+        """按 retstart 翻页直到够数；ESearch 单页上限由 page_size 控制。"""
+        if not 1 <= max_results <= 10000:
+            raise ValueError("max_results 需在 1-10000 之间")
+
+        pmids: list[str] = []
+        retstart = 0
+        while len(pmids) < max_results:
+            want = min(self.page_size, max_results - len(pmids))
+            batch = self.esearch(term, retmax=want, retstart=retstart)
+            if not batch:
+                break
+            pmids.extend(batch)
+            retstart += len(batch)
+            if len(batch) < want:
+                break
+        return list(dict.fromkeys(pmids))[:max_results]
 
     def efetch(self, pmids: list[str]) -> str:
         if not pmids:
@@ -191,7 +213,7 @@ class PubMedSearcher:
 
     def search(self, term: str, max_results: int | None = None) -> list[Article]:
         limit = self.max_results if max_results is None else max_results
-        pmids = self.esearch(term, limit)
+        pmids = self.esearch_all(term, limit)
         logger.info("PubMed 检索 %r：命中 %d 篇", term, len(pmids))
         return self.fetch_by_pmids(pmids)
 

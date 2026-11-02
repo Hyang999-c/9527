@@ -8,6 +8,7 @@ from ..schemas import (
     Article,
     Evidence,
     EvidenceType,
+    ExtractionFailure,
     FullTextStatus,
     PublicationType,
     Report,
@@ -94,6 +95,8 @@ def build_markdown(
     verifications: list[Verification],
     question: str = "",
     title: str = "阿司匹林研究证据简报",
+    extraction_failures: list[ExtractionFailure] | None = None,
+    low_confidence_filtered: int = 0,
 ) -> str:
     status_by_evidence = {item.evidence_id: item for item in verifications}
     counts = {status: 0 for status in VerificationStatus}
@@ -118,9 +121,10 @@ def build_markdown(
         "",
         "缺失信息一律标注为“未报告”，不做推测补全。",
         "",
-        "## 证据条目",
-        "",
     ]
+    if low_confidence_filtered:
+        lines += [f"低置信度未纳入 {low_confidence_filtered} 条（阈值见 config/settings.yaml）。", ""]
+    lines += ["## 证据条目", ""]
 
     if not evidence:
         lines += ["（本轮未抽取到证据）", ""]
@@ -148,6 +152,12 @@ def build_markdown(
             f"- 置信度：{item.confidence:.2f}；核查状态：{STATUS_LABELS[status]}",
             "",
         ]
+
+    if extraction_failures:
+        lines += ["## 抽取失败", ""]
+        for failure in extraction_failures:
+            lines.append(f"- PMID {failure.pmid}：{failure.error}")
+        lines.append("")
 
     lines += [
         "## 核查",
@@ -182,7 +192,14 @@ def build_markdown(
             f"[{article.title}]({link}) · 全文：{FULLTEXT_LABELS[article.fulltext_status]} · "
             f"缺失字段：{missing}"
         )
-    lines += ["", "---", "", "本报告由程序生成，仅供研究参考，不构成医学建议。", ""]
+    lines += [
+        "",
+        "---",
+        "",
+        "本报告由程序生成，仅供研究参考，不构成医学建议。",
+        "全文来自 PMC 开放获取子集，仅用于本地研究；对外转载需逐篇核对许可与署名。",
+        "",
+    ]
     return "\n".join(lines)
 
 
@@ -192,6 +209,8 @@ def build_report(
     verification_results: list[Verification],
     question: str | None = None,
     title: str = "阿司匹林研究证据简报",
+    extraction_failures: list[ExtractionFailure] | None = None,
+    low_confidence_filtered: int = 0,
 ) -> Report:
     if question is None and evidence:
         question = evidence[0].research_question
@@ -211,5 +230,15 @@ def build_report(
         ),
         evidence=evidence,
         verifications=verification_results,
-        markdown=build_markdown(articles, evidence, verification_results, question, title),
+        extraction_failures=extraction_failures or [],
+        low_confidence_filtered=low_confidence_filtered,
+        markdown=build_markdown(
+            articles,
+            evidence,
+            verification_results,
+            question,
+            title,
+            extraction_failures=extraction_failures,
+            low_confidence_filtered=low_confidence_filtered,
+        ),
     )
